@@ -1,0 +1,880 @@
+Disassembly Listing for PocketSimon
+Generated From:
+
+---  /home/jacques/MPLABXProjects/PocketSimon.X/PocketSimon.asm  ----------------------------------------
+                                                  1:     ; NAME: PocketSimon
+                                                  2:     ; DESC:  simon game implemented with a PIC10F202
+                                                  3:     ; DATE: 2012-03-05
+                                                  4:     ; VERSION: 1.0
+                                                  5:     ; 
+                                                  6:     ; GAME:  4 LEDs associated with 4 tones. A sequence of tones must be repeated by
+                                                  7:     ; the player. At success a new tone is appended at the end of sequence.
+                                                  8:     ; After 6, 12, 18, 24 and 32 notes success a tune is played. The maximun length of
+                                                  9:     ; sequence is 32 tones. A player that succeed to replay the full 32 tones sequence
+                                                  10:    ; to  hear the complete victory tune after what the game start over.
+                                                  11:    ; before each sequence play the number of tones that will be played is displayed
+                                                  12:    ; in binary form on the 4 LEDs. If the sequence is longer than 15 then the high
+                                                  13:    ; nibble is displayed first for 1 second then the low nibble for another second.
+                                                  14:    ; After that display there a 1/2 second delay then the sequence is played
+                                                  15:    ; which the user must repeat in exact order. At first error the game is over and
+                                                  16:    ; the MCU fall asleep.
+                                                  17:    ; To wake up the MCU one must press a button. At wake up the MCU run a Power On Self
+                                                  18:    ; Test, which consist of lighting the 4 leds sequencially while sounding the
+                                                  19:    ; associated tone. After POST the 4 LEDs chase in loop until the player press a
+                                                  20:    ; button to start game.
+                                                  21:    ;
+                                                  22:    ; DESCRIPTION: the purpose of this project is to demonstrated the use of a single
+                                                  23:    ; logic I/O to read many switches using a capacitor charging time.
+                                                  24:    ; the game use 4 switches that are all tied to the GP3 input.
+                                                  25:    ; Four leds are used connected to GP0 and GP1
+                                                  26:    ; The audio output is thrue  to GP2
+                                                  27:    ; a PNP small signal transistor is used to drive an 8 ohm speaker
+                                                  28:    ; Another NPN small signal transistor is also connected GP2. This one is used
+                                                  29:    ; to short circuit the switches timing capacitor. If GP3 could be configured
+                                                  30:    ; as output this one would not be needded as the capacitor could discharged thrue
+                                                  31:    ; GP3 output.
+                                                  32:    ; The inconvience of this design is that when reading buttons a noise is heard in speaker.
+                                                  33:    ; I consider this to be is a small inconvience.
+                                                  34:    ; This design connect 2 leds in series from V+ to ground and consequently word only
+                                                  35:    ; with a 3 volt power supply. For a voltage over 3 volt a permanent current path is
+                                                  36:    ; formed thrue diodes GREEN, RED and YELLOW, BLUE and the LEDs are always ligthed.
+                                                  37:    ; But with a 3 volt power supply it works fine.
+                                                  38:    ; see schematic for detail.
+                                                  39:    
+                                                  40:    
+                                                  41:    #include P10F202.INC
+                                                  42:    
+                                                  43:     __config _MCLRE_OFF & _CP_OFF & _WDTE_OFF  ; minuterie 'watchdog' d�sactiv�,
+                                                  44:                                                ;'master clear' d�sactiv�
+                                                  45:                                                ; protection de code d�sactiv�.
+                                                  46:    
+                                                  47:     errorlevel 2 ; pas d'avertissement lors de la compilation
+                                                  48:    
+                                                  49:    ;;;;;;    D�FINITIONS PR�-PROCESSEUR ;;;;;;;;;;;;;;;;;;;;
+                                                  50:    #define OPTION_MASK B'01000001';bit7=0, �veil sur changement d'�tat d'entr�e activ�
+                                                  51:                                   ;bit6=1, r�sistance interne sur les entr�es d�sactiv�
+                                                  52:                                   ;bit5=0, timer0 control� par Fosc/4.
+                                                  53:                                   ;bit4=0, sans effet
+                                                  54:                                   ;bti3=0, pr�-scaler affect� � TIMER0
+                                                  55:                                   ;bit2-0=001, pr�-scale 1:4
+                                                  56:                                   ;  chaque incr�ment de TIMER0 repr�sente 4usec.
+                                                  57:    
+                                                  58:    
+                                                  59:    
+                                                  60:    #define RED_GREEN_TRIS   B'1001'
+                                                  61:    #define YELLOW_BLUE_TRIS B'1010'
+                                                  62:    #define RED_GPIO         B'1001'
+                                                  63:    #define GREEN_GPIO       B'1011'
+                                                  64:    #define YELLOW_GPIO      B'1010'
+                                                  65:    #define BLUE_GPIO        B'1001'
+                                                  66:    
+                                                  67:    #define GREEN  0
+                                                  68:    #define RED    1
+                                                  69:    #define YELLOW 2
+                                                  70:    #define BLUE   3
+                                                  71:    
+                                                  72:    #define BTN_GREEN  0
+                                                  73:    #define BTN_RED    1
+                                                  74:    #define BTN_YELLOW 2
+                                                  75:    #define BTN_BLUE   3
+                                                  76:    #define BTN_NONE   4
+                                                  77:    
+                                                  78:    ; note associ� � chaque couleur
+                                                  79:    #define GREEN_NOTE   B'01000000'
+                                                  80:    #define RED_NOTE B'01000101'
+                                                  81:    #define YELLOW_NOTE    B'01001001'
+                                                  82:    #define BLUE_NOTE  B'01001100'
+                                                  83:    
+                                                  84:    ; valeur des pauses musicales
+                                                  85:    #define THIRTY2TH B'10111111'
+                                                  86:    #define SIXTEENTH B'10011111'
+                                                  87:    #define HEIGHT    B'01111111'
+                                                  88:    #define QUARTER   B'01011111'
+                                                  89:    #define HALF      B'00111111'
+                                                  90:    #define WHOLE     B'00011111'
+                                                  91:    
+                                                  92:    #define AUDIO  GPIO, GP2
+                                                  93:    #define CLAMP GPIO, GP2
+                                                  94:    
+                                                  95:    ; delais de charge du condensateur
+                                                  96:    #define TC1 .15
+                                                  97:    #define TC2 2*TC1
+                                                  98:    #define TC3 3*TC1
+                                                  99:    #define TC4 4*TC1
+                                                  100:   #define TC_MAX 5*TC1
+                                                  101:   
+                                                  102:   ;;;;;;;;;;;;    MACROS  ;;;;;;;;;;;;;;;;;;;;;;
+                                                  103:   
+                                                  104:   
+                                                  105:   led_off macro
+                                                  106:    movlw B'1011'
+                                                  107:    tris GPIO
+                                                  108:    endm
+                                                  109:   
+                                                  110:   tone_off macro
+                                                  111:    bsf AUDIO
+                                                  112:    endm
+                                                  113:   
+                                                  114:   tone_on macro
+                                                  115:    bcf AUDIO
+                                                  116:    endm
+                                                  117:   
+                                                  118:   clamp_on macro
+                                                  119:    bsf CLAMP
+                                                  120:    endm
+                                                  121:   
+                                                  122:   clamp_off macro
+                                                  123:    bcf CLAMP
+                                                  124:    endm
+                                                  125:   
+                                                  126:   init_timer0 macro ; avec pr�-scaler r�gl� � 1:4 �a donne 1msec pour le bouclage � z�ro
+                                                  127:     movlw .7
+                                                  128:     movwf TMR0
+                                                  129:     movlw OPTION_MASK
+                                                  130:     option
+                                                  131:     endm
+                                                  132:   
+                                                  133:   ;;;;;    macros g�n�rales  ;;;;;;;;;;;;;;;;;
+                                                  134:   
+                                                  135:   ; I commented those 4 because they are already defined in mpasm
+                                                  136:   ;#define skpz  btfss STATUS, Z   ; skip next instruction on zero flag
+                                                  137:   ;#define skpnz btfsc STATUS, Z   ; skip next instruction not zero flag
+                                                  138:   ;#define skpc  btfss STATUS, C   ; skip next instruction on carry flag
+                                                  139:   ;#define skpnc btfsc STATUS, C   ; skip next instruction not carry flag
+                                                  140:   
+                                                  141:   brz macro address  ; branch on zero flag
+                                                  142:    skpnz
+                                                  143:    goto address
+                                                  144:    endm
+                                                  145:   
+                                                  146:   brnz macro address ; branch on not zero flag
+                                                  147:    skpz
+                                                  148:    goto address
+                                                  149:    endm
+                                                  150:   
+                                                  151:   brc macro address ; branch on carry flag
+                                                  152:    skpnc
+                                                  153:    goto address
+                                                  154:    endm
+                                                  155:   
+                                                  156:   brnc macro address ; branch on not carry flag
+                                                  157:    skpc
+                                                  158:    goto address
+                                                  159:    endm
+                                                  160:   
+                                                  161:   skpeq macro var, val ; skip next instruction if variable == val
+                                                  162:     movlw val
+                                                  163:     xorwf var, W
+                                                  164:     skpz
+                                                  165:     endm
+                                                  166:   
+                                                  167:   skpneq macro var, val ; skil next instructionif variable!=val
+                                                  168:    movlw val
+                                                  169:    xorwf var, W
+                                                  170:    skpnz
+                                                  171:    endm
+                                                  172:   
+                                                  173:   
+                                                  174:   ; les 2 macros suivantes simule un switch sur la valeur d'un variable
+                                                  175:   ; on utilise d'abord la macro switch suivit des case
+                                                  176:   switch macro var ; pr�pare W pour les cases qui suivent
+                                                  177:    movfw var
+                                                  178:    endm
+                                                  179:   
+                                                  180:   case macro  n, address  ; si W==n saute � l'adresse mentionn�e
+                                                  181:    xorlw n
+                                                  182:    brz address
+                                                  183:    xorlw n ; reset W for next case
+                                                  184:    endm
+                                                  185:   
+                                                  186:   
+                                                  187:   loadr16 macro r16, n  ; charge la valeur n dans une variable 16 bits
+                                                  188:    local h,l
+                                                  189:    h=high n
+                                                  190:    l=low n
+                                                  191:    if l==0
+                                                  192:      clrf r16
+                                                  193:    else
+                                                  194:      movlw low n
+                                                  195:      movwf r16
+                                                  196:    endif
+                                                  197:    if h==0
+                                                  198:      clrf r16+1
+                                                  199:    else
+                                                  200:      movlw h
+                                                  201:      movwf r16+1
+                                                  202:    endif
+                                                  203:    endm
+                                                  204:   
+                                                  205:   incr16 macro r16  ; incr�mente une variable 16 bits
+                                                  206:     incf r16,F
+                                                  207:     skpnz
+                                                  208:     incf r16+1,F
+                                                  209:     endm
+                                                  210:   
+                                                  211:   decr16 macro r16 ; decrement une variable 16 bits
+                                                  212:    decf r16,F
+                                                  213:    comf r16,W
+                                                  214:    skpnz
+                                                  215:    decf r16+1,F
+                                                  216:    endm
+                                                  217:   
+                                                  218:   ;;;;;;;;;;;;;;;; VARIABLES  ;;;;;;;;;;;;;;;;;;;;;
+                                                  219:    cblock 8
+                                                  220:     btn_down : 1  ; indique quel bouton est enfonc�
+                                                  221:     led : 1 ; active led value
+                                                  222:     delay : 2 ; compteur de delais
+                                                  223:     half_period : 1 ; delais pour l'intervalle d'une tonalit�
+                                                  224:     timeout : 2 ; inactivity timeout
+                                                  225:     cap_cnt : 1 ; temps de charge du condensateur
+                                                  226:     notes_cnt : 1 ; nombre de notes jou�es
+                                                  227:     temp : 4 ; registre de travail 16 bits
+                                                  228:     rand : 3 ; registre du g�n�rateur de pseudo-hazard
+                                                  229:     tune_array : 8 ; tableau des notes � jouer  2 bits par notes, maximum 32 notes
+                                                  230:    endc
+                                                  231:   
+                                                  232:   
+                                                  233:   
+                                                  234:   ;;;;;;;;;;;;;;;;;;; CODE SEGMENT ;;;;;;;;;;;;;;;;;;
+                                                  235:    org 0
+0000  0B24     GOTO 0x124                         236:    goto init
+                                                  237:   
+                                                  238:   ;;;;;;;;;;    delay_ms  ;;;;;;;;;;;;;;;;;;
+                                                  239:   ; d�lais en milisecondes
+                                                  240:   ; delay = valeur en milisecondes
+                                                  241:   delay_ms
+0001  022A     MOVF 0xA, F                        242:    movf delay,F
+0002  0743     BTFSS STATUS, 0x2                  243:    brnz dly1
+0003  0A07     GOTO 0x7
+0004  022B     MOVF 0xB, F                        244:    movf delay+1, F
+0005  0643     BTFSC STATUS, 0x2                  245:    skpnz
+0006  0800     RETLW 0x0                          246:    return ; d�lais expir�
+                                                  247:   dly1
+0007  00EA     DECF 0xA, F                        248:    decr16 delay
+0008  024A     COMF 0xA, W
+0009  0643     BTFSC STATUS, 0x2
+000A  00EB     DECF 0xB, F
+                                                  249:   dly2
+000B  0C07     MOVLW 0x7                          250:    init_timer0
+000C  0021     MOVWF TMR0
+000D  0C41     MOVLW 0x41
+000E  0002     OPTION
+                                                  251:   dly3
+000F  0201     MOVF TMR0, W                       252:    movfw TMR0
+0010  0743     BTFSS STATUS, 0x2                  253:    skpz
+0011  0A0F     GOTO 0xF                           254:    goto dly3
+0012  0A01     GOTO 0x1                           255:    goto delay_ms
+                                                  256:   
+                                                  257:   
+                                                  258:   pause_table ; pause length in milliseconds
+0013  01E2     ADDWF PCL, F                       259:    addwf PCL, F
+0014  08D0     RETLW 0xD0                         260:    dt low .2000   ;1
+0015  0807     RETLW 0x7                          261:    dt high .2000
+0016  08E8     RETLW 0xE8                         262:    dt low .1000    ;1/2
+0017  0803     RETLW 0x3                          263:    dt high .1000
+0018  08F4     RETLW 0xF4                         264:    dt low .500    ;1/4
+0019  0801     RETLW 0x1                          265:    dt high .500
+001A  08FA     RETLW 0xFA                         266:    dt low .250     ;1/8
+001B  0800     RETLW 0x0                          267:    dt high .250
+001C  087D     RETLW 0x7D                         268:    dt low .125    ;1/16
+001D  0800     RETLW 0x0                          269:    dt high .125
+001E  0840     RETLW 0x40                         270:    dt low .64     ;1/32
+001F  0800     RETLW 0x0                          271:    dt high .64
+                                                  272:   
+                                                  273:   translate_table ;translate button to corresponding note
+0020  01E2     ADDWF PCL, F                       274:    addwf PCL, F
+0021  0840     RETLW 0x40                         275:    dt GREEN_NOTE
+0022  0845     RETLW 0x45                         276:    dt RED_NOTE
+0023  0849     RETLW 0x49                         277:    dt YELLOW_NOTE
+0024  084C     RETLW 0x4C                         278:    dt BLUE_NOTE
+                                                  279:   
+                                                  280:   tone_table
+0025  01E2     ADDWF PCL, F                       281:    addwf PCL, F
+0026  08FE     RETLW 0xFE                         282:    dt .254  ; G3     bleu (0)
+0027  08F0     RETLW 0xF0                         283:    dt .240  ; G#3
+0028  08E2     RETLW 0xE2                         284:    dt .226  ; A3
+0029  08D6     RETLW 0xD6                         285:    dt .214  ; A#3
+002A  08C9     RETLW 0xC9                         286:    dt .201  ; B3
+002B  08BE     RETLW 0xBE                         287:    dt .190  ; C4     jaune (5)
+002C  08B3     RETLW 0xB3                         288:    dt .179  ; C#4
+002D  08A9     RETLW 0xA9                         289:    dt .169  ; D4
+002E  08A0     RETLW 0xA0                         290:    dt .160  ; D#4
+002F  0897     RETLW 0x97                         291:    dt .151  ; E4     rouge (9)
+0030  088E     RETLW 0x8E                         292:    dt .142  ; F4
+0031  0886     RETLW 0x86                         293:    dt .134  ; F#4
+0032  087F     RETLW 0x7F                         294:    dt .127  ; G4     vert  (12)
+0033  0877     RETLW 0x77                         295:    dt .119  ; G#4
+0034  0871     RETLW 0x71                         296:    dt .113  ; A4
+0035  086A     RETLW 0x6A                         297:    dt .106  ; A#4
+0036  0864     RETLW 0x64                         298:    dt .100  ; B4
+0037  085F     RETLW 0x5F                         299:    dt .95   ; C5
+0038  0859     RETLW 0x59                         300:    dt .89   ; C#5
+0039  0854     RETLW 0x54                         301:    dt .84   ; D5
+003A  084F     RETLW 0x4F                         302:    dt .79   ; D#5
+003B  084B     RETLW 0x4B                         303:    dt .75   ; E5
+003C  0847     RETLW 0x47                         304:    dt .71   ; F5
+003D  0843     RETLW 0x43                         305:    dt .67   ; F#5
+003E  083F     RETLW 0x3F                         306:    dt .63   ; G5
+                                                  307:   
+                                                  308:   rocky_theme
+003F  01E2     ADDWF PCL, F                       309:    addwf PCL,F
+0040  0889     RETLW 0x89                         310:    dt B'10001001' ; 16e
+0041  086B     RETLW 0x6B                         311:    dt B'01101011' ; 8g
+0042  089F     RETLW 0x9F                         312:    dt B'10011111' ; 16p
+0043  082E     RETLW 0x2E                         313:    dt B'00101110' ; 2a
+0044  087F     RETLW 0x7F                         314:    dt B'01111111' ; 8p
+0045  088E     RETLW 0x8E                         315:    dt B'10001110' ; 16a
+0046  0870     RETLW 0x70                         316:    dt B'01110000' ; 8b
+0047  089F     RETLW 0x9F                         317:    dt B'10011111' ; 16p
+0048  0829     RETLW 0x29                         318:    dt B'00101001' ; 2e
+0049  089F     RETLW 0x9F                         319:    dt B'10011111' ; 16p
+004A  08BF     RETLW 0xBF                         320:    dt B'10111111' ; 32p
+004B  0889     RETLW 0x89                         321:    dt B'10001001' ; 16e
+004C  086B     RETLW 0x6B                         322:    dt B'01101011' ; 8g
+004D  089F     RETLW 0x9F                         323:    dt B'10011111' ; 16p
+004E  082E     RETLW 0x2E                         324:    dt B'00101110' ; 2a
+004F  089F     RETLW 0x9F                         325:    dt B'10011111' ; 16p
+0050  08BF     RETLW 0xBF                         326:    dt B'10111111' ; 32p
+0051  088E     RETLW 0x8E                         327:    dt B'10001110' ; 16a
+0052  0870     RETLW 0x70                         328:    dt B'01110000' ; 8b
+0053  089F     RETLW 0x9F                         329:    dt B'10011111' ; 16p
+0054  0809     RETLW 0x9                          330:    dt B'00001001' ; 1e
+0055  087F     RETLW 0x7F                         331:    dt B'01111111' ; 8p
+0056  089F     RETLW 0x9F                         332:    dt B'10011111' ; 16p
+0057  0887     RETLW 0x87                         333:    dt B'10000111' ; 16d4
+0058  0885     RETLW 0x85                         334:    dt B'10000101' ; 16c4
+0059  0867     RETLW 0x67                         335:    dt B'01100111' ; 8d4
+005A  089F     RETLW 0x9F                         336:    dt B'10011111' ; 16p
+005B  0891     RETLW 0x91                         337:    dt B'10010001' ; 16c5
+005C  0893     RETLW 0x93                         338:    dt B'10010011' ; 16d5
+005D  0855     RETLW 0x55                         339:    dt B'01010101' ; 4e5
+005E  085F     RETLW 0x5F                         340:    dt B'01011111' ; 4p
+005F  0891     RETLW 0x91                         341:    dt B'10010001' ; 16c5
+0060  0891     RETLW 0x91                         342:    dt B'10010001' ; 16c5
+0061  0870     RETLW 0x70                         343:    dt B'01110000' ; 8b
+0062  0890     RETLW 0x90                         344:    dt B'10010000' ; 16b
+0063  086E     RETLW 0x6E                         345:    dt B'01101110' ; 8a
+0064  088E     RETLW 0x8E                         346:    dt B'10001110' ; 16a
+0065  084B     RETLW 0x4B                         347:    dt B'01001011' ; 4g
+0066  0876     RETLW 0x76                         348:    dt B'01110110' ; 8f5
+0067  0815     RETLW 0x15                         349:    dt B'00010101' ; 1e5
+                                                  350:   
+                                                  351:   
+                                                  352:   
+                                                  353:   
+                                                  354:   led_gpio_table ; led GPIO value for each led
+0068  01E2     ADDWF PCL, F                       355:    addwf PCL,F
+0069  080B     RETLW 0xB                          356:    dt GREEN_GPIO
+006A  0809     RETLW 0x9                          357:    dt RED_GPIO
+006B  080A     RETLW 0xA                          358:    dt YELLOW_GPIO
+006C  0809     RETLW 0x9                          359:    dt BLUE_GPIO
+                                                  360:   
+                                                  361:   led_tris_table ; TRIS value for each led
+006D  01E2     ADDWF PCL, F                       362:    addwf PCL,F
+006E  0809     RETLW 0x9                          363:    dt RED_GREEN_TRIS
+006F  0809     RETLW 0x9                          364:    dt RED_GREEN_TRIS
+0070  080A     RETLW 0xA                          365:    dt YELLOW_BLUE_TRIS
+0071  080A     RETLW 0xA                          366:    dt YELLOW_BLUE_TRIS
+0072  002D     MOVWF 0xD                          367:    movwf timeout
+                                                  368:   
+                                                  369:   
+                                                  370:   ;;;;;;;  ligth_led  ;;;;;;
+                                                  371:   ;; entr�e: led contient le no. du led
+                                                  372:   light_led
+0073  0209     MOVF 0x9, W                        373:    movfw led
+0074  0968     CALL 0x68                          374:    call led_gpio_table
+0075  0026     MOVWF GPIO                         375:    movwf GPIO
+0076  0209     MOVF 0x9, W                        376:    movfw led
+0077  096D     CALL 0x6D                          377:    call led_tris_table
+0078  0006     TRIS GPIO                          378:    tris GPIO
+0079  0800     RETLW 0x0                          379:    return
+                                                  380:   
+                                                  381:   
+                                                  382:   ;;;;;;;;;;;;;;;;;  read_buttons ;;;;;;;;;;;;;;;;;;;;
+                                                  383:   ;; fait la lecture de l'entr�e GP3
+                                                  384:   ;; si GP3 == 1
+                                                  385:   ;; v�rifie le compte  cap_cnt et identifie le bouton
+                                                  386:   read_buttons
+007A  0068     CLRF 0x8                           387:     clrf btn_down
+007B  006F     CLRF 0xF                           388:     clrf cap_cnt
+007C  0446     BCF GPIO, 0x2                      389:     clamp_off ; permet au condensateur de se charger.
+                                                  390:   rbtn1
+007D  0666     BTFSC GPIO, 0x3                    391:     btfsc GPIO, GP3
+007E  0A88     GOTO 0x88                          392:     goto rbtn3
+007F  02AF     INCF 0xF, F                        393:     incf cap_cnt,F
+0080  0C4B     MOVLW 0x4B                         394:     movlw TC_MAX
+0081  008F     SUBWF 0xF, W                       395:     subwf cap_cnt, W
+0082  0703     BTFSS STATUS, 0x0                  396:     skpc
+0083  0A7D     GOTO 0x7D                          397:     goto rbtn1
+0084  0C04     MOVLW 0x4                          398:     movlw BTN_NONE
+0085  0028     MOVWF 0x8                          399:     movwf btn_down
+0086  0546     BSF GPIO, 0x2                      400:     clamp_on
+0087  0800     RETLW 0x0                          401:     return
+                                                  402:   rbtn3 ; v�rifie la valeur de cap_cnt pour d�terminer le temps de charge (bouton)
+0088  0546     BSF GPIO, 0x2                      403:     clamp_on ; vide le condensateur
+0089  0C0F     MOVLW 0xF                          404:     movlw TC1
+008A  008F     SUBWF 0xF, W                       405:     subwf cap_cnt, W
+008B  0703     BTFSS STATUS, 0x0                  406:     skpc
+008C  0800     RETLW 0x0                          407:     return  ; BTN_BLUE
+008D  02A8     INCF 0x8, F                        408:     incf btn_down,F
+008E  0C1E     MOVLW 0x1E                         409:     movlw TC2
+008F  008F     SUBWF 0xF, W                       410:     subwf cap_cnt, W
+0090  0703     BTFSS STATUS, 0x0                  411:     skpc
+0091  0800     RETLW 0x0                          412:     return ; BTN_YELLOW
+0092  02A8     INCF 0x8, F                        413:     incf btn_down,F
+0093  0C2D     MOVLW 0x2D                         414:     movlw TC3
+0094  008F     SUBWF 0xF, W                       415:     subwf cap_cnt, W
+0095  0703     BTFSS STATUS, 0x0                  416:     skpc
+0096  0800     RETLW 0x0                          417:     return ; BTN_RED
+0097  02A8     INCF 0x8, F                        418:     incf btn_down,F ; BTN_GREEN
+0098  0C3C     MOVLW 0x3C                         419:     movlw TC4
+0099  008F     SUBWF 0xF, W                       420:     subwf cap_cnt,W
+009A  0603     BTFSC STATUS, 0x0                  421:     skpnc
+009B  02A8     INCF 0x8, F                        422:     incf btn_down,f ; BTN_NONE
+009C  0800     RETLW 0x0                          423:     return 
+                                                  424:   
+                                                  425:   ;;;;;; store_note  ;;;;;;;;
+                                                  426:   ;;; enregistre la note dans le tableau
+                                                  427:   ;;; entr�es
+                                                  428:   ;;; temp=l'ordre de la note 0-31 dans le tableau
+                                                  429:   ;;; temp+1=note  0-3  cod� sur 2 bits
+                                                  430:   ;;; cet algorithme est un peut complexe, les 4 notes sont cod�es sur 2 bits
+                                                  431:   ;;; et on met 4 notes par octets. Il faut donc d�placer les 2 bits de la note
+                                                  432:   ;;; � la position d�sir�e et ensuite enregistrer ces 2 bits dans l'octet cibl�
+                                                  433:   ;;; sans alt�rer le contenu des autres bits.
+                                                  434:   ;;; pour arriver � ce r�sulat on met les 6 autres bits � 1 et on fait un
+                                                  435:   ;;; ET bit � bit sur l'octet cible.
+                                                  436:   ;;; exemple:  note = 01   et sa position dans octet est 1
+                                                  437:   ;;;           l'octet cible contient d�j�   B'00110111'
+                                                  438:   ;;;                              position 1  =  ^^
+                                                  439:   ;;; temp+1 contient la note soit B'00000010'
+                                                  440:   ;;; on met tous les autres bits a 1 donc  temp+1='11111110'
+                                                  441:   ;;; pour mettre la note en position 1 on fait une rotation de temp+1 vers la gauche
+                                                  442:   ;;; de 4 bits  et on obtient:  temp+1= B'11101111'
+                                                  443:   ;;;;                           note        ^^
+                                                  444:   ;;; ensuite en enregitre la note en faisant un ET bit � bit avec l'octet cible
+                                                  445:   ;;;    octet_cible = B'00110111' & B'11101111' = B'00100111'
+                                                  446:   store_note
+009D  0C18     MOVLW 0x18                         447:    movlw tune_array
+009E  0024     MOVWF FSR                          448:    movwf FSR
+009F  0CFC     MOVLW 0xFC                         449:    movlw 0xFC
+00A0  0151     ANDWF 0x11, W                      450:    andwf temp,W    ; copie position dans temp+2 (temp ne doit pas �tre alt�r�)
+00A1  0033     MOVWF 0x13                         451:    movwf temp+2
+00A2  0403     BCF STATUS, 0x0                    452:    bcf STATUS, C  ; division enti�re de la position par 4 pour trouver le bon octet
+00A3  0333     RRF 0x13, F                        453:    rrf temp+2,F
+00A4  0333     RRF 0x13, F                        454:    rrf temp+2,F
+00A5  0213     MOVF 0x13, W                       455:    movfw temp+2
+00A6  01E4     ADDWF FSR, F                       456:    addwf FSR, F ; maintenant FSR pointe vers le bon octet dans le tableau
+00A7  0C03     MOVLW 0x3                          457:    movlw 3
+00A8  0172     ANDWF 0x12, F                      458:    andwf temp+1,F
+00A9  0033     MOVWF 0x13                         459:    movwf temp+2
+00AA  0151     ANDWF 0x11, W                      460:    andwf temp,W
+00AB  00B3     SUBWF 0x13, F                      461:    subwf temp+2,F  ; nombre de rotation de 2 bits � gauche pour plac� la note dans l'octet.
+00AC  0CFC     MOVLW 0xFC                         462:    movlw 0xFC
+00AD  0031     MOVWF 0x11                         463:    movwf temp
+                                                  464:   store_note1
+00AE  0743     BTFSS STATUS, 0x2                  465:    brnz rotate_left_twice
+00AF  0AB5     GOTO 0xB5
+00B0  0211     MOVF 0x11, W                       466:    movfw temp  ; rotation compl�t�e
+00B1  0160     ANDWF INDF, F                      467:    andwf INDF,F    ; annulation des 2 bits dans l'octet cible
+00B2  0212     MOVF 0x12, W                       468:    movfw temp+1
+00B3  0120     IORWF INDF, F                      469:    iorwf INDF,F ; insertion de la note
+00B4  0800     RETLW 0x0                          470:    return
+                                                  471:   rotate_left_twice ; on fait une rotaton � gauche de 2 bits par position
+00B5  0403     BCF STATUS, 0x0                    472:    bcf STATUS, C
+00B6  0372     RLF 0x12, F                        473:    rlf temp+1,F
+00B7  0372     RLF 0x12, F                        474:    rlf temp+1,F
+00B8  0503     BSF STATUS, 0x0                    475:    bsf STATUS,C 
+00B9  0371     RLF 0x11, F                        476:    rlf temp,F
+00BA  0371     RLF 0x11, F                        477:    rlf temp,F
+00BB  00F3     DECF 0x13, F                       478:    decf temp+2,F
+00BC  0AAE     GOTO 0xAE                          479:    goto store_note1
+                                                  480:   
+                                                  481:   ;;;;;;  load_note  ;;;;;;;;
+                                                  482:   ;;; va chercher la note dans le tableau et la met dans W
+                                                  483:   ;;; entr�e: W contient l'ordre de la note  0-31
+                                                  484:   ;;; sortie: temp+1 contient la note 0-3
+                                                  485:   ;;; cet algorthime est le compl�mentaire de store_note
+                                                  486:   ;;; 1) on trouve le bon octet en divisant la position par 4
+                                                  487:   ;;; 2) on pr�pare le masque ET pour supprimer les bits des autres notes
+                                                  488:   ;;; 3) on fait ET logique avec l'octet du tableau en envoyant le r�sultat dans W
+                                                  489:   ;;; 4) on effectue une rotation vers la droite de 2 bits par position
+                                                  490:   load_note
+00BD  0031     MOVWF 0x11                         491:    movwf temp
+00BE  0C18     MOVLW 0x18                         492:    movlw tune_array
+00BF  0024     MOVWF FSR                          493:    movwf FSR
+00C0  0CFC     MOVLW 0xFC                         494:    movlw 0xFC
+00C1  0151     ANDWF 0x11, W                      495:    andwf temp,W
+00C2  0032     MOVWF 0x12                         496:    movwf temp+1
+00C3  0403     BCF STATUS, 0x0                    497:    bcf STATUS,C
+00C4  0332     RRF 0x12, F                        498:    rrf temp+1,F
+00C5  0312     RRF 0x12, W                        499:    rrf temp+1,W
+00C6  01E4     ADDWF FSR, F                       500:    addwf FSR,F  ; FSR pointe vers l'octet cible dans le tableau
+00C7  0200     MOVF INDF, W                       501:    movfw INDF
+00C8  0032     MOVWF 0x12                         502:    movwf temp+1 ; octet cible maintenant dans temp+1
+00C9  0C03     MOVLW 0x3                          503:    movlw 3
+00CA  0033     MOVWF 0x13                         504:    movwf temp+2
+00CB  0151     ANDWF 0x11, W                      505:    andwf temp,W
+00CC  00B3     SUBWF 0x13, F                      506:    subwf temp+2,F
+                                                  507:   load_note1
+00CD  0743     BTFSS STATUS, 0x2                  508:    brnz rotate_right_twice
+00CE  0AD2     GOTO 0xD2
+00CF  0C03     MOVLW 0x3                          509:    movlw 3
+00D0  0172     ANDWF 0x12, F                      510:    andwf temp+1,F  ; la note est maintenant dans W
+00D1  0800     RETLW 0x0                          511:    return
+                                                  512:   rotate_right_twice
+00D2  0332     RRF 0x12, F                        513:    rrf temp+1,F
+00D3  0332     RRF 0x12, F                        514:    rrf temp+1,F
+00D4  00F3     DECF 0x13, F                       515:    decf temp+2,F
+00D5  0ACD     GOTO 0xCD                          516:    goto load_note1
+                                                  517:   
+                                                  518:   
+                                                  519:   ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;
+                                                  520:   ;; g�n�rateur de pseudo hazard
+                                                  521:   ;; pour am�liorer le hazard  rand+2 sera
+                                                  522:   ;; r�initialiser par cap_cnt lorsque l'utilisateur a press� un bouton
+                                                  523:   random ; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
+00D6  0403     BCF STATUS, 0x0                    524:     bcf STATUS, C
+00D7  0337     RRF 0x17, F                        525:     rrf rand+2,F
+00D8  0336     RRF 0x16, F                        526:     rrf rand+1,F
+00D9  0335     RRF 0x15, F                        527:     rrf rand,F
+00DA  0703     BTFSS STATUS, 0x0                  528:     skpc
+00DB  0800     RETLW 0x0                          529:     return
+00DC  0CE1     MOVLW 0xE1                         530:     movlw 0xE1
+00DD  01B7     XORWF 0x17, F                      531:     xorwf rand+2, F
+00DE  0800     RETLW 0x0                          532:     return
+                                                  533:   
+                                                  534:   ;;;;;;;;;;;;;;;;;;;   wait_btn_release  ;;;;;;;;;;;;;;;;;;;
+                                                  535:   wait_btn_release
+00DF  097A     CALL 0x7A                          536:    call read_buttons
+00E0  0C04     MOVLW 0x4                          537:    skpeq btn_down, BTN_NONE
+00E1  0188     XORWF 0x8, W
+00E2  0743     BTFSS STATUS, 0x2
+00E3  0ADF     GOTO 0xDF                          538:    goto wait_btn_release
+00E4  0800     RETLW 0x0                          539:    return
+                                                  540:   
+                                                  541:   
+                                                  542:   ;;;;;;;;;;;;; tone  ;;;;;;;;;;;;;
+                                                  543:   ; entr�es:
+                                                  544:   ;  w = note : codage  bits 0-4 notes note 0x1F=pause , bits 5-7 dur�e
+                                                  545:   ; calcul bas� sur un Tcy=1uSec
+                                                  546:   ; chaque demi-cycle exige 6Tcy de pr�paration en incluant le goto tone1
+                                                  547:   ; il faut s'assurer que le parcours � l'int�rieur de la boucle
+                                                  548:   ; de demi-cylce est de 10Tcy
+                                                  549:   ; les valeurs de demi-p�riode et de dur�e de la note sont bas� sur 10Tcy
+                                                  550:   tone
+00E5  0031     MOVWF 0x11                         551:    movwf temp
+00E6  0C1F     MOVLW 0x1F                         552:    movlw 0x1F
+00E7  0151     ANDWF 0x11, W                      553:    andwf temp,W
+00E8  0F1F     XORLW 0x1F                         554:    xorlw 0x1F
+00E9  0643     BTFSC STATUS, 0x2                  555:    brz pause
+00EA  0B19     GOTO 0x119
+00EB  0C40     MOVLW 0x40                         556:    loadr16 delay, 0x0D40
+00EC  002A     MOVWF 0xA
+00ED  0C0D     MOVLW 0xD
+00EE  002B     MOVWF 0xB
+00EF  0C03     MOVLW 0x3                          557:    movlw 3
+00F0  002D     MOVWF 0xD                          558:    movwf timeout
+00F1  0CE0     MOVLW 0xE0                         559:    movlw 0xE0
+00F2  0151     ANDWF 0x11, W                      560:    andwf temp,W
+00F3  0032     MOVWF 0x12                         561:    movwf temp+1
+00F4  03B2     SWAPF 0x12, F                      562:    swapf temp+1,F
+00F5  0332     RRF 0x12, F                        563:    rrf temp+1,F
+00F6  0232     MOVF 0x12, F                       564:    movf temp+1,F
+00F7  0643     BTFSC STATUS, 0x2                  565:    brz tone02
+00F8  0AFF     GOTO 0xFF
+                                                  566:   tone01
+00F9  0403     BCF STATUS, 0x0                    567:    bcf STATUS,C
+00FA  032D     RRF 0xD, F                         568:    rrf timeout
+00FB  032B     RRF 0xB, F                         569:    rrf delay+1,F
+00FC  032A     RRF 0xA, F                         570:    rrf delay,F
+00FD  02F2     DECFSZ 0x12, F                     571:    decfsz temp+1
+00FE  0AF9     GOTO 0xF9                          572:    goto tone01
+                                                  573:   tone02
+00FF  0C1F     MOVLW 0x1F                         574:    movlw 0x1F
+0100  0151     ANDWF 0x11, W                      575:    andwf temp,W
+0101  0925     CALL 0x25                          576:    call tone_table
+0102  002C     MOVWF 0xC                          577:    movwf half_period
+                                                  578:   tone1
+0103  0C04     MOVLW 0x4                          579:    movlw B'0100'
+0104  01A6     XORWF GPIO, F                      580:    xorwf GPIO, F  ; commute la sortie son
+0105  020C     MOVF 0xC, W                        581:    movfw half_period
+0106  0031     MOVWF 0x11                         582:    movwf temp
+                                                  583:   tone2
+0107  00EA     DECF 0xA, F                        584:    decf delay,F
+0108  024A     COMF 0xA, W                        585:    comf delay,W
+0109  0743     BTFSS STATUS, 0x2                  586:    skpz
+010A  0B13     GOTO 0x113                         587:    goto tone3
+010B  00EB     DECF 0xB, F                        588:    decf delay+1,F
+010C  024B     COMF 0xB, W                        589:    comf delay+1,W
+010D  0743     BTFSS STATUS, 0x2                  590:    skpz
+010E  0B14     GOTO 0x114                         591:    goto tone4  ; pour avoir 10 Tcy en passant par ici il faut saut� tone3
+010F  00ED     DECF 0xD, F                        592:    decf timeout,F
+0110  024D     COMF 0xD, W                        593:    comf timeout,W
+0111  0643     BTFSC STATUS, 0x2                  594:    skpnz
+0112  0B17     GOTO 0x117                         595:    goto tone5
+                                                  596:   tone3
+0113  0B14     GOTO 0x114                         597:    goto $+1
+                                                  598:   tone4
+0114  02F1     DECFSZ 0x11, F                     599:    decfsz temp
+0115  0B07     GOTO 0x107                         600:    goto tone2  ; bouclage demi-cycle
+0116  0B03     GOTO 0x103                         601:    goto tone1 ; demi-cylce compl�t�
+                                                  602:   tone5
+0117  0546     BSF GPIO, 0x2                      603:    clamp_on
+0118  0800     RETLW 0x0                          604:    return
+                                                  605:   pause
+0119  03B1     SWAPF 0x11, F                      606:    swapf temp, F
+011A  0C0E     MOVLW 0xE                          607:    movlw 0xE
+011B  0171     ANDWF 0x11, F                      608:    andwf temp,F
+011C  0211     MOVF 0x11, W                       609:    movfw temp
+011D  0913     CALL 0x13                          610:    call pause_table
+011E  002A     MOVWF 0xA                          611:    movwf delay
+011F  0291     INCF 0x11, W                       612:    incf temp,W
+0120  0913     CALL 0x13                          613:    call pause_table
+0121  002B     MOVWF 0xB                          614:    movwf delay+1
+0122  0901     CALL 0x1                           615:    call delay_ms
+0123  0800     RETLW 0x0                          616:    return
+                                                  617:   
+                                                  618:   
+                                                  619:   ;;;;;;;;;;;;;;;  INITIALIZATION CODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                                  620:   init
+0124  0C0C     MOVLW 0xC                          621:    movlw .12
+0125  0025     MOVWF OSCCAL                       622:    movwf OSCCAL
+0126  0C41     MOVLW 0x41                         623:    movlw OPTION_MASK
+0127  0002     OPTION                             624:    option
+0128  0C0B     MOVLW 0xB                          625:    led_off
+0129  0006     TRIS GPIO
+012A  0070     CLRF 0x10                          626:    clrf notes_cnt
+012B  0CA5     MOVLW 0xA5                         627:    movlw 0xA5
+012C  0035     MOVWF 0x15                         628:    movwf rand
+012D  0546     BSF GPIO, 0x2                      629:    clamp_on
+                                                  630:   
+                                                  631:   ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
+                                                  632:   
+                                                  633:   main
+012E  0069     CLRF 0x9                           634:    clrf led
+                                                  635:   post ; power on self test
+012F  0973     CALL 0x73                          636:    call light_led
+0130  0209     MOVF 0x9, W                        637:    movfw led
+0131  0920     CALL 0x20                          638:    call translate_table
+0132  09E5     CALL 0xE5                          639:    call tone
+0133  02A9     INCF 0x9, F                        640:    incf led,F
+0134  0749     BTFSS 0x9, 0x2                     641:    btfss led, 2
+0135  0B2F     GOTO 0x12F                         642:    goto post
+0136  0C0B     MOVLW 0xB                          643:    led_off
+0137  0006     TRIS GPIO
+0138  09DF     CALL 0xDF                          644:    call wait_btn_release
+0139  0069     CLRF 0x9                           645:    clrf led
+                                                  646:   led_chase          ;round robin led chase
+013A  0973     CALL 0x73                          647:    call light_led    ;until a button is pressed down or timeout occur
+013B  0CFA     MOVLW 0xFA                         648:    loadr16 delay, .250
+013C  002A     MOVWF 0xA
+013D  006B     CLRF 0xB
+013E  0901     CALL 0x1                           649:    call delay_ms
+013F  02A9     INCF 0x9, F                        650:    incf led,F
+0140  0C03     MOVLW 0x3                          651:    movlw 3
+0141  0169     ANDWF 0x9, F                       652:    andwf led,F
+0142  097A     CALL 0x7A                          653:    call read_buttons
+0143  0C04     MOVLW 0x4                          654:    skpneq btn_down, BTN_NONE
+0144  0188     XORWF 0x8, W
+0145  0643     BTFSC STATUS, 0x2
+0146  0B3A     GOTO 0x13A                         655:    goto led_chase
+0147  0C0B     MOVLW 0xB                          656:    led_off
+0148  0006     TRIS GPIO
+0149  020D     MOVF 0xD, W                        657:    movfw timeout
+014A  0035     MOVWF 0x15                         658:    movwf rand
+014B  09DF     CALL 0xDF                          659:    call wait_btn_release
+014C  0CF4     MOVLW 0xF4                         660:    loadr16 delay, .500
+014D  002A     MOVWF 0xA
+014E  0C01     MOVLW 0x1
+014F  002B     MOVWF 0xB
+0150  0901     CALL 0x1                           661:    call delay_ms
+                                                  662:   
+                                                  663:   play_rand
+0151  0210     MOVF 0x10, W                       664:    movfw notes_cnt
+0152  0031     MOVWF 0x11                         665:    movwf temp
+0153  02B0     INCF 0x10, F                       666:    incf notes_cnt,F
+                                                  667:   ;;;;;;  display_count ;;;;;;;;;;;;;
+                                                  668:   hi_nibble
+0154  0C03     MOVLW 0x3                          669:    movlw 3
+0155  0029     MOVWF 0x9                          670:    movwf led
+0156  0210     MOVF 0x10, W                       671:    movfw notes_cnt
+0157  0034     MOVWF 0x14                         672:    movwf temp+3
+0158  0694     BTFSC 0x14, 0x4                    673:    btfsc temp+3, 4
+0159  0973     CALL 0x73                          674:    call light_led
+015A  0CE8     MOVLW 0xE8                         675:    loadr16 delay, .1000
+015B  002A     MOVWF 0xA
+015C  0C03     MOVLW 0x3
+015D  002B     MOVWF 0xB
+015E  0901     CALL 0x1                           676:    call delay_ms
+015F  0C0B     MOVLW 0xB                          677:    led_off
+0160  0006     TRIS GPIO
+0161  03B4     SWAPF 0x14, F                      678:    swapf temp+3,F
+0162  006D     CLRF 0xD                           679:    clrf timeout
+0163  0069     CLRF 0x9                           680:    clrf led
+                                                  681:   lo_nibble
+0164  0374     RLF 0x14, F                        682:    rlf temp+3,F
+0165  0603     BTFSC STATUS, 0x0                  683:    skpnc
+0166  0973     CALL 0x73                          684:    call light_led
+0167  02A9     INCF 0x9, F                        685:    incf led,F
+0168  0C03     MOVLW 0x3                          686:    movlw 3
+0169  0169     ANDWF 0x9, F                       687:    andwf led,F
+016A  0743     BTFSS STATUS, 0x2                  688:    skpz
+016B  0B6E     GOTO 0x16E                         689:    goto $+3
+016C  0390     SWAPF 0x10, W                      690:    swapf notes_cnt,W
+016D  0034     MOVWF 0x14                         691:    movwf temp+3
+016E  0C04     MOVLW 0x4                          692:    loadr16 delay, .4
+016F  002A     MOVWF 0xA
+0170  006B     CLRF 0xB
+0171  0901     CALL 0x1                           693:    call delay_ms
+0172  02ED     DECFSZ 0xD, F                      694:    decfsz timeout
+0173  0B64     GOTO 0x164                         695:    goto lo_nibble
+                                                  696:   display_exit
+0174  0C0B     MOVLW 0xB                          697:    led_off
+0175  0006     TRIS GPIO
+0176  0CF4     MOVLW 0xF4                         698:    loadr16 delay, .500
+0177  002A     MOVWF 0xA
+0178  0C01     MOVLW 0x1
+0179  002B     MOVWF 0xB
+017A  0901     CALL 0x1                           699:    call delay_ms
+                                                  700:   ;;;; end display_count ;;;;;
+017B  09D6     CALL 0xD6                          701:    call random
+017C  0217     MOVF 0x17, W                       702:    movfw rand+2
+017D  0196     XORWF 0x16, W                      703:    xorwf rand+1,W
+017E  0195     XORWF 0x15, W                      704:    xorwf rand,W
+017F  0E03     ANDLW 0x3                          705:    andlw 3
+0180  0032     MOVWF 0x12                         706:    movwf temp+1
+0181  099D     CALL 0x9D                          707:    call store_note
+0182  0074     CLRF 0x14                          708:    clrf temp+3 ; compteur de  notes
+                                                  709:   play_rand02
+0183  0214     MOVF 0x14, W                       710:    movfw temp+3
+0184  09BD     CALL 0xBD                          711:    call load_note
+0185  0212     MOVF 0x12, W                       712:    movfw temp+1
+0186  0029     MOVWF 0x9                          713:    movwf led
+0187  0973     CALL 0x73                          714:    call light_led
+0188  0209     MOVF 0x9, W                        715:    movfw led
+0189  0920     CALL 0x20                          716:    call translate_table
+018A  09E5     CALL 0xE5                          717:    call tone
+018B  0C0B     MOVLW 0xB                          718:    led_off
+018C  0006     TRIS GPIO
+018D  0C64     MOVLW 0x64                         719:    loadr16 delay, .100
+018E  002A     MOVWF 0xA
+018F  006B     CLRF 0xB
+0190  0901     CALL 0x1                           720:    call delay_ms
+0191  02B4     INCF 0x14, F                       721:    incf temp+3,F
+0192  0210     MOVF 0x10, W                       722:    movfw notes_cnt
+0193  0094     SUBWF 0x14, W                      723:    subwf temp+3,W
+0194  0743     BTFSS STATUS, 0x2                  724:    skpz
+0195  0B83     GOTO 0x183                         725:    goto play_rand02
+                                                  726:   
+                                                  727:   wait_playback
+0196  0074     CLRF 0x14                          728:    clrf temp+3 ; compteur de notes
+                                                  729:   wait01
+0197  0CFF     MOVLW 0xFF                         730:    movlw .255
+0198  002D     MOVWF 0xD                          731:    movwf timeout
+                                                  732:   wait02
+0199  0C14     MOVLW 0x14                         733:    loadr16 delay, .20
+019A  002A     MOVWF 0xA
+019B  006B     CLRF 0xB
+019C  0901     CALL 0x1                           734:    call delay_ms
+019D  020D     MOVF 0xD, W                        735:    movfw timeout
+019E  0035     MOVWF 0x15                         736:    movwf rand
+019F  00ED     DECF 0xD, F                        737:    decf timeout,F
+01A0  0643     BTFSC STATUS, 0x2                  738:    skpnz
+01A1  0BF2     GOTO 0x1F2                         739:    goto playback_error
+01A2  097A     CALL 0x7A                          740:    call read_buttons
+01A3  0C04     MOVLW 0x4                          741:    skpneq btn_down, BTN_NONE
+01A4  0188     XORWF 0x8, W
+01A5  0643     BTFSC STATUS, 0x2
+01A6  0B99     GOTO 0x199                         742:    goto wait02
+01A7  0C0A     MOVLW 0xA                          743:    loadr16 delay, .10  ; attend 10 msec et refait une lecture
+01A8  002A     MOVWF 0xA
+01A9  006B     CLRF 0xB
+01AA  0901     CALL 0x1                           744:    call delay_ms       ; pour �liminer les artefacts du au rebonds
+01AB  097A     CALL 0x7A                          745:    call read_buttons
+01AC  0C04     MOVLW 0x4                          746:    skpneq btn_down, BTN_NONE
+01AD  0188     XORWF 0x8, W
+01AE  0643     BTFSC STATUS, 0x2
+01AF  0B97     GOTO 0x197                         747:    goto wait01
+01B0  0208     MOVF 0x8, W                        748:    movfw btn_down
+01B1  0029     MOVWF 0x9                          749:    movwf led
+01B2  0973     CALL 0x73                          750:    call light_led
+01B3  0209     MOVF 0x9, W                        751:    movfw led
+01B4  0920     CALL 0x20                          752:    call translate_table
+01B5  09E5     CALL 0xE5                          753:    call tone
+01B6  0C0B     MOVLW 0xB                          754:    led_off
+01B7  0006     TRIS GPIO
+01B8  09DF     CALL 0xDF                          755:    call wait_btn_release
+01B9  0214     MOVF 0x14, W                       756:    movfw temp+3
+01BA  09BD     CALL 0xBD                          757:    call load_note
+01BB  0209     MOVF 0x9, W                        758:    movfw led
+01BC  00B2     SUBWF 0x12, F                      759:    subwf temp+1
+01BD  0743     BTFSS STATUS, 0x2                  760:    skpz
+01BE  0BF2     GOTO 0x1F2                         761:    goto playback_error
+01BF  02B4     INCF 0x14, F                       762:    incf temp+3,F
+01C0  0210     MOVF 0x10, W                       763:    movfw notes_cnt
+01C1  0094     SUBWF 0x14, W                      764:    subwf temp+3,W
+01C2  0743     BTFSS STATUS, 0x2                  765:    skpz
+01C3  0B97     GOTO 0x197                         766:    goto wait01
+                                                  767:   playback_success
+01C4  0210     MOVF 0x10, W                       768:    switch notes_cnt
+01C5  0F06     XORLW 0x6                          769:    case .6, victory
+01C6  0643     BTFSC STATUS, 0x2
+01C7  0BDF     GOTO 0x1DF
+01C8  0F06     XORLW 0x6
+01C9  0F0C     XORLW 0xC                          770:    case .12, victory
+01CA  0643     BTFSC STATUS, 0x2
+01CB  0BDF     GOTO 0x1DF
+01CC  0F0C     XORLW 0xC
+01CD  0F12     XORLW 0x12                         771:    case .18, victory
+01CE  0643     BTFSC STATUS, 0x2
+01CF  0BDF     GOTO 0x1DF
+01D0  0F12     XORLW 0x12
+01D1  0F18     XORLW 0x18                         772:    case .24, victory
+01D2  0643     BTFSC STATUS, 0x2
+01D3  0BDF     GOTO 0x1DF
+01D4  0F18     XORLW 0x18
+01D5  0F20     XORLW 0x20                         773:    case .32, victory_final
+01D6  0643     BTFSC STATUS, 0x2
+01D7  0BE1     GOTO 0x1E1
+01D8  0F20     XORLW 0x20
+01D9  0CF4     MOVLW 0xF4                         774:    loadr16 delay, .500
+01DA  002A     MOVWF 0xA
+01DB  0C01     MOVLW 0x1
+01DC  002B     MOVWF 0xB
+01DD  0901     CALL 0x1                           775:    call delay_ms
+01DE  0B51     GOTO 0x151                         776:    goto play_rand
+                                                  777:   
+                                                  778:   victory
+01DF  0210     MOVF 0x10, W                       779:    movfw notes_cnt
+01E0  0BE3     GOTO 0x1E3                         780:    goto play_victory_theme
+                                                  781:   victory_final
+01E1  0070     CLRF 0x10                          782:    clrf notes_cnt
+01E2  0C28     MOVLW 0x28                         783:    movlw .40
+                                                  784:   play_victory_theme
+01E3  0033     MOVWF 0x13                         785:    movwf temp+2
+01E4  0074     CLRF 0x14                          786:    clrf temp+3
+                                                  787:   prt01
+01E5  0214     MOVF 0x14, W                       788:    movfw temp+3
+01E6  093F     CALL 0x3F                          789:    call rocky_theme
+01E7  09E5     CALL 0xE5                          790:    call tone
+01E8  02B4     INCF 0x14, F                       791:    incf temp+3,F
+01E9  0213     MOVF 0x13, W                       792:    movfw temp+2
+01EA  0094     SUBWF 0x14, W                      793:    subwf temp+3,W
+01EB  0743     BTFSS STATUS, 0x2                  794:    skpz
+01EC  0BE5     GOTO 0x1E5                         795:    goto prt01
+01ED  006A     CLRF 0xA                           796:    loadr16 delay, 0x400
+01EE  0C04     MOVLW 0x4
+01EF  002B     MOVWF 0xB
+01F0  0901     CALL 0x1                           797:    call delay_ms
+01F1  0B51     GOTO 0x151                         798:    goto play_rand
+                                                  799:   
+                                                  800:   playback_error
+01F2  0C58     MOVLW 0x58                         801:    movlw B'01011000'
+01F3  09E5     CALL 0xE5                          802:    call tone
+01F4  0070     CLRF 0x10                          803:    clrf notes_cnt
+01F5  0069     CLRF 0x9                           804:    clrf led
+01F6  0B3A     GOTO 0x13A                         805:    goto led_chase
+0FFF  0000     NOP                                806:    end
+                                                  807:   
+                                                  808:   

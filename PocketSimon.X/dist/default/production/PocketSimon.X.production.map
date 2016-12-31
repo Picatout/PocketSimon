@@ -1,0 +1,155 @@
+MPLINK 5.08, LINKER
+Linker Map File - Created Sat Dec 31 16:51:45 2016
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x0003ee
+                   .cinit    romdata   0x0001f7    program   0x000004
+.config_0FFF_BUILD/DEFAULT/PRODUCTION/POCKETS       code   0x000fff    program   0x000002
+                   .udata      udata   0x000008       data   0x000018
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x0001f8      
+                            0x000fff    0x000fff      
+            506 out of 517 program addresses used, program memory utilization is 97%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+             _.org_0_0113   0x000113    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             _.org_0_016B   0x00016b    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                 delay_ms   0x000001    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             display_exit   0x000174    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly1   0x000007    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly2   0x00000b    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly3   0x00000f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                hi_nibble   0x000154    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     init   0x000124    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                led_chase   0x00013a    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           led_gpio_table   0x000068    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           led_tris_table   0x00006d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                light_led   0x000073    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                lo_nibble   0x000164    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                load_note   0x0000bd    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               load_note1   0x0000cd    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     main   0x00012e    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     note   0x0000e5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   note01   0x0000f9    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   note02   0x0000ff    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note1   0x000103    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note2   0x000107    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note3   0x000113    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note4   0x000114    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note5   0x000117    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               note_table   0x000025    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    pause   0x000119    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              pause_table   0x000013    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                play_rand   0x000151    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              play_rand02   0x000183    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+       play_victory_theme   0x0001e3    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           playback_error   0x0001f2    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+         playback_success   0x0001c4    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     post   0x00012f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    prt01   0x0001e5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   random   0x0000d6    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    rbtn1   0x00007d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    rbtn3   0x000088    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             read_buttons   0x00007a    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              rocky_theme   0x00003f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+       rotate_right_twice   0x0000d2    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+          shift_left_slot   0x0000b5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               store_note   0x00009d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              store_note1   0x0000ae    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+          translate_table   0x000020    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  victory   0x0001df    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+            victory_final   0x0001e1    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   wait01   0x000197    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   wait02   0x000199    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+         wait_btn_release   0x0000df    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+            wait_playback   0x000196    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                 btn_down   0x000008       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  cap_cnt   0x00000f       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    delay   0x00000a       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              half_period   0x00000c       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                      led   0x000009       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                notes_cnt   0x000010       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     rand   0x000015       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     temp   0x000011       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  timeout   0x00000d       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               tune_array   0x000018       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                 delay_ms   0x000001    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly1   0x000007    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly2   0x00000b    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     dly3   0x00000f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              pause_table   0x000013    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+          translate_table   0x000020    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               note_table   0x000025    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              rocky_theme   0x00003f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           led_gpio_table   0x000068    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           led_tris_table   0x00006d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                light_led   0x000073    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             read_buttons   0x00007a    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    rbtn1   0x00007d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    rbtn3   0x000088    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               store_note   0x00009d    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              store_note1   0x0000ae    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+          shift_left_slot   0x0000b5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                load_note   0x0000bd    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               load_note1   0x0000cd    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+       rotate_right_twice   0x0000d2    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   random   0x0000d6    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+         wait_btn_release   0x0000df    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     note   0x0000e5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   note01   0x0000f9    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   note02   0x0000ff    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note1   0x000103    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note2   0x000107    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             _.org_0_0113   0x000113    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note3   0x000113    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note4   0x000114    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    note5   0x000117    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    pause   0x000119    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     init   0x000124    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     main   0x00012e    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     post   0x00012f    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                led_chase   0x00013a    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                play_rand   0x000151    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                hi_nibble   0x000154    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                lo_nibble   0x000164    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             _.org_0_016B   0x00016b    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+             display_exit   0x000174    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              play_rand02   0x000183    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+            wait_playback   0x000196    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   wait01   0x000197    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                   wait02   0x000199    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+         playback_success   0x0001c4    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  victory   0x0001df    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+            victory_final   0x0001e1    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+       play_victory_theme   0x0001e3    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    prt01   0x0001e5    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+           playback_error   0x0001f2    program     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                 btn_down   0x000008       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                      led   0x000009       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                    delay   0x00000a       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+              half_period   0x00000c       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  timeout   0x00000d       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                  cap_cnt   0x00000f       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                notes_cnt   0x000010       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     temp   0x000011       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+                     rand   0x000015       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+               tune_array   0x000018       data     static C:\Microchip\MPLABXProjects\PocketSimon.X\PocketSimon.asm
+
+
