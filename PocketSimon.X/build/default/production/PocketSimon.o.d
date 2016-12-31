@@ -1,3 +1,3 @@
 build/default/production/PocketSimon.o:  \
-	C:/Microchip/MPLABXProjects/PocketSimon.X/PocketSimon.asm  \
+	C:/Users/Jacques/Documents/GitHub/pocketsimon/PocketSimon.X/PocketSimon.asm  \
 

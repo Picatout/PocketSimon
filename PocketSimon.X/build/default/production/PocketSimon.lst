@@ -1,4 +1,4 @@
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  1
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -50,14 +50,14 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00001         LIST
                       00002 
                       00003 ;==========================================================================
-                      00004 ; Build date : Sep 13 2016
+                      00004 ; Build date : Nov 17 2016
                       00005 ;  MPASM PIC10F202 processor include
                       00006 ; 
                       00007 ;  (c) Copyright 1999-2016 Microchip Technology, All rights reserved
                       00008 ;==========================================================================
                       00009 
                       00151         LIST
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  2
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00094 #define AUDIO  GPIO, GP2
                       00095 #define CLAMP GPIO, GP2
                       00096 
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  3
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -175,7 +175,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00147 brc macro address ; branch on carry flag
                       00148  skpnc
                       00149  goto address
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  4
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -234,7 +234,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00200 incr16 macro r16  ; increment r16 variable
                       00201   incf r16,F
                       00202   skpnz
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  5
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -293,7 +293,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 000C   0021               M   movwf TMR0
 000D   0C41               M   movlw OPTION_MASK
 000E   0002               M   option
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  6
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -352,7 +352,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0039   0854           00296  dt .84   ; D5
 003A   084F           00297  dt .79   ; D#5
 003B   084B           00298  dt .75   ; E5
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  7
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -411,7 +411,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0068                  00349 led_gpio_table: ; led GPIO value for each led
 0068   01E2           00350  addwf PCL,F
 0069   080B           00351  dt GREEN_GPIO
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  8
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -470,7 +470,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0089   0C0F           00399   movlw TC1
 008A   00??           00400   subwf cap_cnt, W
 008B   0703           00401   skpc
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE  9
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -529,7 +529,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 00A4   03??           00452  rrf temp+2,F
 00A5   02??           00453  movfw temp+2
 00A6   01E4           00454  addwf FSR, F ; ajust pointer to correct byte in tune_array
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 10
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 10
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -588,7 +588,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 00C7   0200           00503  movfw INDF   ; get the byte containing the note slot
 00C8   00??           00504  movwf temp+1 ; save it in temp+1
 00C9   0C03           00505  movlw 3
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 11
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 11
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -647,7 +647,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00551 ; period based on Tcy=1uSec
                       00552 ; each half-cycle has 6Tcy including 'goto note1'
                       00553 ; each path in half-cycle loop is 10Tcy;.
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 12
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 12
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -706,7 +706,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0104   01A6           00585  xorwf GPIO, F  ; toggle output pin
 0105   02??           00586  movfw half_period
 0106   00??           00587  movwf temp
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 13
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 13
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -765,7 +765,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00635  clamp_on
 012D   0546               M  bsf CLAMP
                       00636 
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 14
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 14
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -824,7 +824,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 014B   09??           00665  call wait_btn_release
                       00666  loadr16 delay, .500
   0000                    M  local h,l
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 15
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 15
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -883,7 +883,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0163   00??           00686  clrf led
 0164                  00687 lo_nibble
 0164   03??           00688  rlf temp+3,F
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 16
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 16
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -942,7 +942,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 017B   09??           00707  call random
 017C   02??           00708  movfw rand+2
 017D   01??           00709  xorwf rand+1,W
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 17
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 17
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -1001,7 +1001,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                           M  if l==0
                           M    clrf delay
                           M  else
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 18
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 18
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -1060,7 +1060,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00760  led_off
 01B6   0C0B               M  movlw B'1011'
 01B7   0006               M  tris GPIO
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 19
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 19
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -1119,7 +1119,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                           M    clrf delay
                           M  else
 01D9   0CF4               M    movlw low .500
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 20
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 20
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -1178,7 +1178,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 01F2   0C58           00808  movlw B'01011000'
 01F3   09??           00809  call note
 01F4   00??           00810  clrf notes_cnt
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 21
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 21
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -1187,7 +1187,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 01F5   00??           00811  clrf led
 01F6   0A??           00812  goto led_chase
 0FEB                  00813  end
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 22
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 22
 
 
 SYMBOL TABLE
@@ -1246,7 +1246,7 @@ RED_NOTE                          B'01000101'
 SIXTEENTH                         B'10011111'
 STATUS                            00000003
 T0CS                              00000005
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 23
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 23
 
 
 SYMBOL TABLE
@@ -1305,7 +1305,7 @@ display_exit                      00000174
 dly1                              00000007
 dly2                              0000000B
 dly3                              0000000F
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 24
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 24
 
 
 SYMBOL TABLE
@@ -1364,7 +1364,7 @@ switch
 temp                              00000009
 timeout                           00000005
 translate_table                   00000020
-MPASM 5.70                   POCKETSIMON.ASM   12-31-2016  16:51:43         PAGE 25
+MPASM 5.71                   POCKETSIMON.ASM   12-31-2016  17:31:25         PAGE 25
 
 
 SYMBOL TABLE
