@@ -15,4 +15,4 @@ Simon game implemented on a PIC10F202
   toy. At each success the length of the sequence is incremented by 1. The game end when the player can't reproduce the sequence without error.
   
 ## Schematic  
-![schematic](/KiCAD/schematic.png)
+![schematic](KiCAD/schematic.png)
