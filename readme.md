@@ -14,6 +14,11 @@ Simon game implemented on a PIC10F202
 
   4 LEDs of different colours to each LED a tone and a button is associated. The object is to repeat the sequence of tones played by the 
   toy. At each success the length of the sequence is incremented by 1. The game end when the player can't reproduce the sequence without error.
+
+## development tools
+* MPLABX 
+* mpasm  assembler
+* pickit 2 or 3 for device programming
   
 ## Schematic  
 ![schematic](/KiCAD/schematic.png)
