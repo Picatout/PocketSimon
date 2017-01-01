@@ -1,5 +1,7 @@
 ; NAME: PocketSimon
 ; DESC:  simon game implemented on a PIC10F202
+; COPYRIGHT: jacques Deschenes, 2012,2016  
+; LICENCE: GPLv3    
 ; DATE: 2012-03-05
 ; REVISION: 2016-12-31    
 ; VERSION: 1.1
@@ -14,7 +16,7 @@
 ; nibble is displayed first for 1 second then the low nibble for another second.
 ; After that display there a 1/2 second delay then the sequence is played
 ; which the user must repeat in exact order. At first error the game is over and
-; the MCU fall asleep.
+; a MCU wait for a new set.
 ; To wake up the MCU one must press a button. At wake up the MCU run a Power On Self
 ; Test, which consist of lighting the 4 LEDs sequencially while sounding the
 ; associated note. After POST the 4 LEDs chase in loop until the player press a
@@ -38,15 +40,28 @@
 ; But with a 3 volt power supply it works fine because the conduction voltage of LEDs
 ; in series in over 3 volts.
 ; see schematic for detail.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;This program is free software: you can redistribute it and/or modify
+;    it under the terms of the GNU General Public License as published by
+;    the Free Software Foundation, either version 3 of the License, or
+;    (at your option) any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License
+;    along with this program.  If not, see <http://www.gnu.org/licenses/>.    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+    include P10F202.INC
 
-
-#include P10F202.INC
-
- __config _MCLRE_OFF & _CP_OFF & _WDTE_OFF  ; Watchdog disabled
+    __config _MCLRE_OFF & _CP_OFF & _WDTE_OFF  ; Watchdog disabled
                                             ;'master clear' disabled
                                             ; no code protection
 
- errorlevel 2 ; warning disabled
+    errorlevel 2 ; warning disabled
 
 ;;;;;;    MCU option mask ;;;;;;;;;;;;;;;;;;;;
 #define OPTION_MASK B'01000001';bit7=0, wakeup on I/O change
@@ -522,7 +537,7 @@ rotate_right_twice
 ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;
 ;; pseudo random number generator
 ;; 24 bits linear feedback shift register 
-;; rand+2 is loaded with cap_cnt at each button pressed.
+;; rand+2 is loaded with cap_cnt at each button pressed
 ;; to improve randomness.
 ;; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
 random:  
@@ -638,7 +653,7 @@ init: ; hardware initialization
 
 main:
  clrf led
-post ; power on self test
+post: ; power on self test
  call light_led
  movfw led
  call translate_table
@@ -649,7 +664,8 @@ post ; power on self test
  led_off
  call wait_btn_release
  clrf led
-led_chase          ;round robin led chase
+; wait for a button down to start game 
+led_chase:    ;round robin led chase
  call light_led    ;until a button is pressed down or timeout occur
  loadr16 delay, .250
  call delay_ms
@@ -665,13 +681,13 @@ led_chase          ;round robin led chase
  call wait_btn_release
  loadr16 delay, .500
  call delay_ms
-
-play_rand
+; game loop.
+play_rand:
  movfw notes_cnt
  movwf temp
  incf notes_cnt,F
-;;;;;;  display_count in binary ;;;;;;;;;;;;;
-hi_nibble
+;;;;;;  display sequence length in binary ;;;;;;;;;;;;;
+hi_nibble ; show high nibble
  movlw 3
  movwf led
  movfw notes_cnt
@@ -679,12 +695,12 @@ hi_nibble
  btfsc temp+3, 4
  call light_led
  loadr16 delay, .1000
- call delay_ms
+ call delay_ms ; 1 second pause
  led_off
  swapf temp+3,F
  clrf timeout
  clrf led
-lo_nibble
+lo_nibble  ; show low nibble
  rlf temp+3,F
  skpnc
  call light_led
@@ -701,9 +717,10 @@ lo_nibble
  goto lo_nibble
 display_exit
  led_off
- loadr16 delay, .500
- call delay_ms
+ loadr16 delay, .500 
+ call delay_ms ; half seconde pause
 ;;;; end display_count ;;;;;
+; add a random value to play sequence 
  call random
  movfw rand+2
  xorwf rand+1,W
@@ -712,7 +729,8 @@ display_exit
  movwf temp+1
  call store_note
  clrf temp+3 ; notes counter
-play_rand02
+; play sequence loop 
+play_rand02:
  movfw temp+3
  call load_note
  movfw temp+1
@@ -723,19 +741,19 @@ play_rand02
  call note
  led_off
  loadr16 delay, .100
- call delay_ms
+ call delay_ms ; 1/10 second pause
  incf temp+3,F
  movfw notes_cnt
  subwf temp+3,W
  skpz
  goto play_rand02
-
-wait_playback
+; wait player playing sequence back
+wait_playback:
  clrf temp+3 ; notes counter
-wait01
- movlw .255
+wait01:
+ movlw .255   ; maximun delay between each button 255 msec.
  movwf timeout
-wait02
+wait02: ; wait button loop
  loadr16 delay, .20
  call delay_ms
  movfw timeout
@@ -750,7 +768,8 @@ wait02
  call delay_ms       ; debouncing
  call read_buttons
  skpneq btn_down, BTN_NONE
- goto wait01
+ goto wait01 ; no button down
+; light LED and play tone corresponding to that button
  movfw btn_down
  movwf led
  call light_led
@@ -769,7 +788,7 @@ wait02
  movfw notes_cnt
  subwf temp+3,W
  skpz
- goto wait01
+ goto wait01 ; loop to wait for next button
 playback_success
  switch notes_cnt
  case .6, victory
@@ -780,17 +799,17 @@ playback_success
  loadr16 delay, .500
  call delay_ms
  goto play_rand
-
-victory
+; play rocky_theme at 6,12,18,24 and 32 length success.
+victory:
  movfw notes_cnt
  goto play_victory_theme
-victory_final
+victory_final:
  clrf notes_cnt
  movlw .40
 play_victory_theme
  movwf temp+2
  clrf temp+3
-prt01
+prt01:
  movfw temp+3
  call rocky_theme
  call note
@@ -803,13 +822,15 @@ prt01
  call delay_ms
  goto play_rand
 
-; player repeat error
-playback_error
+; player failed to repeat sequence
+; game over. Reset to beginning 
+playback_error:
  movlw B'01011000'
  call note
  clrf notes_cnt
  clrf led
  goto led_chase
+ 
  end
 
 
