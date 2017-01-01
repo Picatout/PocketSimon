@@ -28,7 +28,7 @@ Simon game implemented on a PIC10F202
 *  1 CR2032 battery holder
 *  1 CR2032 lithium battery
 *  1 PIC10F202  MCU DIP-8 format
-*  2 100nF ceramic capacitor
+*  2 100nF/50v ceramic capacitor
 *  1 10µF/16v electrolytic capacitor
 *  2 1N4148 diode
 *  1 2N3904 NPN transistor
@@ -38,13 +38,12 @@ Simon game implemented on a PIC10F202
 *  1 yellow 5mm LED T1-3/4
 *  1 blue 5mm LED T1-3/4
 *  4 push button
+*  1 470 ohm resistor
 *  4 1K resistors
 *  5 3K resistors
 *  1 10K resistors
-*  1 56 ohm resistor
-*  1 8 ohm small speaker
+*  1 150 ohm small speaker
 *  1 prototyping board 7cmx9cm bakelyte, i.e. Adafruit p/n: 2670 pq of 10.
-*  some length of 30 AWG  hookup wire
 
 ## licence
   software licence: GPLv3
