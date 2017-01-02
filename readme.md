@@ -95,7 +95,7 @@ if you got that far you are a real champion and you can listen to the complete R
  RED | 5
  GREEN | 1
 
-  count = NB*25+NY*10+NR*5+NG 
+  count = NB * 25 + NY * 10 + NR * 5 + NG 
   where N is number of blinks.
  
 ## software
