@@ -88,7 +88,7 @@ if you got that far you are a real champion and you can listen to the complete R
  At then of of game the length of last sequence succeeded is displayed in the following way.
  Each LED is assigned a value and blink for multiple of this value. Adding the blinks the total count.
 
- LEDs   | value
+ LED    | value
  ------ | -----
  BLUE   | 25
  YELLOW | 10
