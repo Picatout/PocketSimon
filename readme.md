@@ -80,7 +80,7 @@ See source code for more information.
  The assembly is on single side perforated board with copper rings. I didn't design any layout before hand as the assembly is quite
  simple. I drawn this one after I completed the assembly.
  
-![board layout](/documents/board layout.png)
+![board layout](/documents/board_layout.png)
 
 ![assembly board](/documents/prototype.png)
  
