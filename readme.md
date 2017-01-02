@@ -2,6 +2,10 @@
 
 Simon game implemented on a PIC10F202
 
+Copyright Jacques Deschenes, 2012,2016,2017
+
+See licencing at end of this file.
+
 ## the PIC10F202 a minimalist MCU
 *	program memory 768 bytes 
 *   RAM 24 bytes
