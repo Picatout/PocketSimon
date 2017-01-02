@@ -31,8 +31,8 @@ Simon game implemented on a PIC10F202
 
 ## BOM
 *  1 mini spst power switch
-*  1 CR2032 battery holder
-*  1 CR2032 lithium battery
+*  1 CR2025 battery holder
+*  1 CR2025 lithium battery
 *  1 PIC10F202  MCU DIP-8 format
 *  2 100nF/50v ceramic capacitor
 *  1 10µF/16v electrolytic capacitor
