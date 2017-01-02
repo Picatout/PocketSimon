@@ -107,4 +107,5 @@ if you got that far you are a real champion and you can listen to the complete R
 ## licence
 *  software licence: GPLv3
 *  hardware licence: CC-BY-SA
+*  In short form: it is open source. You can copy hardware and software as long as you keep credits and licensing in files.
   
