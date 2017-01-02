@@ -10,14 +10,20 @@ Simon game implemented on a PIC10F202
 *   3 Input/Output pins
 *   1 Input only pin.
 
+ This is the simplest microcontroller available on market. the core is what Microchip call **baseline**. It as a 2 level hardware stack 
+ which is quite limiting. This is why the main routine code is so linear instead of relying more on sub-routines calls.
+ 
+ The code is written in assembly using **mpasmx**. This core as only 33 instructions which are coded on 12 bits so 768 bytes of program
+ memory correspond to 512 instructions words. The program use 508 of those and all the 24 bytes of RAM.
+ 
 ## game description
 
-  4 LEDs of different colours to each LED a tone and a button is associated. The object is to repeat the sequence of tones played by the 
-  toy. At each success the length of the sequence is incremented by 1. The game end when the player can't reproduce the sequence without error.
+  4 LEDs of different colours. To each LED a tone and a button is associated. The object is to repeat the sequence of tones played by the 
+  the PocketSimon. At each success the length of the sequence is incremented by 1. The game end when the player make a mistake repeating the sequence.
 
 ## development tools
 * MPLABX 
-* mpasm  assembler
+* mpasms  assembler
 * pickit 2 or 3 for device programming
   
 ## Schematic  
@@ -43,9 +49,34 @@ Simon game implemented on a PIC10F202
 *  5 3K resistors
 *  1 10K resistors
 *  1 150 ohm small speaker
-*  1 prototyping board 7cmx9cm bakelyte, i.e. Adafruit p/n: 2670 pq of 10.
+*  1 prototyping board 7cmx9cm bakelyte, i.e. Adafruit p/n: 2670 pq of 10
 
+
+## Hardware description
+
+	The circuit is powered by a 3 volt button cell of CR2032 model  through **SW1** power switch. Capacitor **C1** should be 
+soldered closest as possible to MCU power pins **Vdd** and **Vss**. Each LED as a 1K resistor in serie to reduce current drain on
+the lithium cell. These are connected between the power rail by pair in serie with the midpoint connected to GPIO. **GP1** is at
+midpoint between RED and GREEN LEDs and **GP0** is at midpoint between BLUE en YELLOW LEDs. This enable to control 2 LEDs with
+a single I/O. When the outpout is high the lower LED turn on and when it is low the upper LED turn on. To turn off both LEDs the
+I/O  is configure in high impedance input mode. When configured this way no current go trough the LEDs because the sum of their 
+threshold voltage is higher than 3volt. This would not works with a 5volt power supply.
+
+ The audio output is through **GP2** which control **Q1** base. Which drive a 150 ohm 1 inch voice coil speaker. I prefer voice coil
+ speaker than piezo speaker for sound quality. **GP2** also control **Q2** which is used to discharge **C3**. This sharing of **GP2**
+  as a  little inconvience in the form of noise when **GP2** is used to turn on and off **Q2**.
+  
+ the 4 push buttons  **SW2** to **SW5**  are connected between **Vdd** and a resistors ladder. The position of the switch in this 
+ladder determine the charging time constant of **C3**.  Hence the button can be identified by the time it take to voltage at **C3** 
+to charge from 0 volt to logic level **1**. The reading sequence consist of discharging **C3** through **Q2** then counting the 
+time it take for **GP3** to go from a **0** logic level to a **1** logic level. There maybe some variability from MCU to MCU and 
+also due to **C3** capacitor tolerance on vallue. So the constant GRN_CNT defined is the software may have to be adjusted by testing.
+See source code for more information. 
+ 
+## Software description
+__to do__
+ 
 ## licence
-  software licence: GPLv3
-  hardware licence: CC-BY-SA
+*  software licence: GPLv3
+*  hardware licence: CC-BY-SA
   

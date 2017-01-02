@@ -11,33 +11,37 @@
 ; After 6, 12, 18, 24 and 32 notes success a tune is played. The maximun length of
 ; sequence is 32 notes. A player that succeed to replay the full 32 notes sequence
 ; hear the complete victory tune after what the game start over.
-; before each sequence play the number of notes that will be played is displayed
-; in binary form on the 4 LEDs. If the sequence is longer than 15 then the high
-; nibble is displayed first for 1 second then the low nibble for another second.
-; After that display there a 1/2 second delay then the sequence is played
-; which the user must repeat in exact order. At first error the game is over and
-; a MCU wait for a new set.
-; To wake up the MCU one must press a button. At wake up the MCU run a Power On Self
-; Test, which consist of lighting the 4 LEDs sequencially while sounding the
-; associated note. After POST the 4 LEDs chase in loop until the player press a
-; button to start game.
+; At end of each game the length of sequence is displayed.
+; The display work like this:
+;  BLUE LED is 25
+;  YELLOW LED is 10
+;  RED LED is 5
+;  GREEN LED is 1
+; length=NB*25+NY*10+NR*5+NG
+;  where Nx is the number of blink for each color.    
+; At first error the game is over and a MCU wait for a new set.
+; At power on the MCU run a Power On Self Test, which consist of lighting 
+; the 4 LEDs sequencially while sounding the associated note. 
+; After POST the 4 LEDs light in loop until the player press a
+; button to start game. 
 ;
 ; DESCRIPTION: the purpose of this project is to demonstrate the use of a single
 ; logic I/O to read many switches using a capacitor charging time.
-; the game use 4 switches that are all tied to the GP3 input.
+; The game use 4 switches that are all connected  to a resistors ladder. The bottom
+; of this ladder is connected to a capacitor and to the GP3 input. The time it take
+; for this capacitor to charge to a logic 1 level depend on which button is pressed.    
 ; Four LEDs of different colour are connected to GP0 and GP1
 ; The audio output is to GP2
-; a PNP small switching transistor is used to drive an 8 ohm speaker
+; a PNP small switching transistor is used to drive an 150 ohm speaker
 ; Another NPN small signal transistor is also connected GP2. This one is used
-; to discharge the switches timing capacitor. If GP3 could be configured
-; as output this one would not be needded as the capacitor could be discharged through
-; GP3 output low.
+; to discharge the switches timing capacitor. As the 2 transistors are controlled by
+; the same I/O as an inconvinience.    
 ; The inconvience of this design is that when reading buttons a noise is heard in speaker.
-; I consider this to be is a small inconvience.
-; This design connect 2 LEDs in series from V+ to ground and consequently worls only
+; I consider this to be a small inconvience.
+; This design connect 2 LEDs in series from V+ to ground and consequently works only
 ; with a 3 volt power supply. For a voltage over 3 volt a permanent current path is
 ; formed through diodes GREEN, RED and YELLOW, BLUE and the LEDs are always ligthed.
-; But with a 3 volt power supply it works fine because the conduction voltage of LEDs
+; But with a 3 volt power supply it works fine because the conduction voltage of 2 LEDs
 ; in series in over 3 volts.
 ; see schematic for detail.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,8 +62,8 @@
     include P10F202.INC
 
     __config _MCLRE_OFF & _CP_OFF & _WDTE_OFF  ; Watchdog disabled
-                                            ;'master clear' disabled
-                                            ; no code protection
+                                               ;'master clear' disabled
+                                               ; no code protection
 
     errorlevel 2 ; warning disabled
 
@@ -76,8 +80,8 @@
 
 #define RED_GREEN_TRIS   B'1001'
 #define YELLOW_BLUE_TRIS B'1010'
-#define RED_GPIO         B'1001'
-#define GREEN_GPIO       B'1011'
+#define RED_GPIO         B'1011'
+#define GREEN_GPIO       B'1001'
 #define YELLOW_GPIO      B'1010'
 #define BLUE_GPIO        B'1001'
 
@@ -110,11 +114,19 @@
 #define CLAMP GPIO, GP2
 
 ; charging time delay
-#define TC1 .15
-#define TC2 2*TC1
-#define TC3 3*TC1
-#define TC4 4*TC1
-#define TC_MAX 5*TC1
+; this is adjusted by testing
+; It may vary due to components
+; tolerance.
+; When pressing RED button if
+; GREEN LED turn on increase
+; GRN_CNT value.
+; On the contrary if YELLOW LED
+; turn on decrease GRN_CNT value.			       
+#define GRN_CNT .20
+#define RED_CNT 2*GRN_CNT
+#define YEL_CNT 3*GRN_CNT
+#define BLUE_CNT 4*GRN_CNT
+#define TC_MAX 5*GRN_CNT
 
 ;;;;;;;;;;;;    MACROS  ;;;;;;;;;;;;;;;;;;;;;;
 
@@ -139,15 +151,6 @@ clamp_on macro
 clamp_off macro
  bcf CLAMP
  endm
-
-init_timer0 macro ; initialize TIMER0 for 1msec period
-  movlw .7
-  movwf TMR0
-  movlw OPTION_MASK
-  option
-  endm
-
-;;;;;    macros ;;;;;;;;;;;;;;;;;
 
 brz macro address  ; branch on zero flag
  skpnz
@@ -212,19 +215,6 @@ loadr16 macro r16, n  ; load r16 with constant
  endif
  endm
 
-incr16 macro r16  ; increment r16 variable
-  incf r16,F
-  skpnz
-  incf r16+1,F
-  endm
-
-decr16 macro r16 ; decrement r16 variable
- decf r16,F
- comf r16,W
- skpnz
- decf r16+1,F
- endm
-
 ;;;;;;;;;;;;;;;; VARIABLES  ;;;;;;;;;;;;;;;;;;;;;
     udata
   btn_down res 1  ; which button is down
@@ -233,8 +223,11 @@ decr16 macro r16 ; decrement r16 variable
   half_period res 1 ; note half-period delay
   timeout res 2 ; inactivity timeout
   cap_cnt res 1 ; capacitor charge time
-  notes_cnt res 1 ; count notes played
-  temp res 4 ; temporary storage
+  notes_cnt res 1 ; sequence length
+  t0 res 1 ; temporary storage
+  t1 res 1 
+  t2 res 1
+  t3 res 1
   rand res 3 ; pseudo random number generator register
   tune_array res 8 ; note sequence array maximun 32 notes. 2 bits used per note.
  
@@ -249,21 +242,19 @@ decr16 macro r16 ; decrement r16 variable
 ; delay in miliseconds
 ; delay = value in msec
 delay_ms:
- movf delay,F
- brnz dly1
- movf delay+1, F
- skpnz
- return ; delay over
-dly1
- decr16 delay
-dly2
- init_timer0
-dly3
+ movlw .7
+ movwf TMR0
  movfw TMR0
  skpz
- goto dly3
+ goto $-2
+ movlw 1
+ subwf delay,F
+ skpc
+ subwf delay+1,F
+ skpnc
  goto delay_ms
-
+ return
+ 
 
 pause_table: ; pause length in milliseconds
  addwf PCL, F
@@ -360,22 +351,21 @@ rocky_theme:
 
 
 
-
-led_gpio_table: ; led GPIO value for each led
+ ; led GPIO value for each led
+led_gpio_table:
  addwf PCL,F
  dt GREEN_GPIO
  dt RED_GPIO
  dt YELLOW_GPIO
  dt BLUE_GPIO
-
-led_tris_table: ; TRIS value for each led
+ 
+; TRIS value for each led
+led_tris_table: 
  addwf PCL,F
  dt RED_GREEN_TRIS
  dt RED_GREEN_TRIS
  dt YELLOW_BLUE_TRIS
  dt YELLOW_BLUE_TRIS
- movwf timeout
-
 
 ;;;;;;;  ligth_led  ;;;;;;
 ;; input: led is LED id
@@ -411,22 +401,22 @@ rbtn1
   return
 rbtn3 ; check cap_cnt to identify button
   clamp_on ; discharge capacitor
-  movlw TC1
+  movlw GRN_CNT
   subwf cap_cnt, W
   skpc
-  return  ; BTN_BLUE
+  return  ; BTN_GREEN
   incf btn_down,F
-  movlw TC2
-  subwf cap_cnt, W
-  skpc
-  return ; BTN_YELLOW
-  incf btn_down,F
-  movlw TC3
+  movlw RED_CNT
   subwf cap_cnt, W
   skpc
   return ; BTN_RED
-  incf btn_down,F ; BTN_GREEN
-  movlw TC4
+  incf btn_down,F
+  movlw YEL_CNT
+  subwf cap_cnt, W
+  skpc
+  return ; BTN_YELLOW
+  incf btn_down,F ; BTN_BLUE
+  movlw BLUE_CNT
   subwf cap_cnt,W
   skpnc
   incf btn_down,f ; BTN_NONE
@@ -435,8 +425,8 @@ rbtn3 ; check cap_cnt to identify button
 ;;;;;; store_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; store note in tune_array
 ;;; inputs:
-;;;	temp= array index where to store note {0-31}
-;;;	temp+1=note  {0-3} stored as 2 bits value.
+;;;	t0= array index where to store note {0-31}
+;;;	t1=note  {0-3} stored as 2 bits value.
 ;;; This one is a little tricky because each byte is split in 4 slots of
 ;;; 2 bits. The position in tune_array is index/4 and the slot is the remainder.  
 ;;; So there is 4 notes per byte. The note must be stored in the good slot without
@@ -457,88 +447,86 @@ store_note:
 ;initialize array pointer    
  movlw tune_array
  movwf FSR
-; extract the byte order and put in temp+2 
+; extract the byte order and put in t2 
  movlw 0xFC
- andwf temp,W  ; mask out 2 least significant bits 
- movwf temp+2 ; and put the value in temp+2
+ andwf t0,W  ; mask out 2 least significant bits 
+ movwf t2 ; and put the value in t2
 ; divide by 4
  bcf STATUS, C  
- rrf temp+2,F
- rrf temp+2,F
- movfw temp+2
+ rrf t2,F
+ rrf t2,F
+ movfw t2
  addwf FSR, F ; ajust pointer to correct byte in tune_array
  movlw 3
- andwf temp+1,F ; all bits to 0 except bits 0,1
- movwf temp+2   ; 3->temp+2
- andwf temp,W   ; get slot number
- subwf temp+2,F  ; shift left counter.
+ andwf t1,F ; all bits to 0 except bits 0,1
+ movwf t2   ; 3->t2
+ andwf t0,W   ; get slot number
+ subwf t2,F  ; shift left counter.
 ;create the AND mask
  movlw 0xFC
- movwf temp
+ movwf t0
 store_note1
 ; first shift left AND mask and note value
 ; while shift counter not zero. 
  brnz shift_left_slot
- movfw temp  ; mask shifted in right slot
+ movfw t0  ; mask shifted in right slot
  andwf INDF,F ; reset that slot to 0
- movfw temp+1 ; note to W
+ movfw t1 ; note to W
  iorwf INDF,F ; insert note in slot
  return
 shift_left_slot
 ;; shift left mask 1 slot 
  bcf STATUS, C
- rlf temp+1,F
- rlf temp+1,F
+ rlf t1,F
+ rlf t1,F
 ;; shift left note 1 slot 
  bsf STATUS,C 
- rlf temp,F
- rlf temp,F
- decf temp+2,F
+ rlf t0,F
+ rlf t0,F
+ decf t2,F
  goto store_note1
 
 ;;;;;;  load_note  ;;;;;;;;
 ;;; get note from tune_array and put it in W 
 ;;; input: W is array index  {0-31}
-;;; output: temp+1 note {0-3}
+;;; output: t1 note {0-3}
 ;;; byte_order is index/4
 ;;; slot is remainder(index,4)
 ;;; AND mask is inverse of that store_note 
 load_note:
- movwf temp ; save index
+ movwf t0 ; save index
 ; set array pointer
  movlw tune_array
  movwf FSR
  movlw 0xFC
- andwf temp,W
- movwf temp+1
+ andwf t0,W
+ movwf t1
  bcf STATUS,C
- rrf temp+1,F
- rrf temp+1,W
+ rrf t1,F
+ rrf t1,W
  addwf FSR,F  ; FSR point to byte in tune_array
  movfw INDF   ; get the byte containing the note slot
- movwf temp+1 ; save it in temp+1
+ movwf t1 ; save it in t1
  movlw 3
- movwf temp+2 ; the AND mask 
- andwf temp,W ; get slot number
- subwf temp+2,F ; save it in temp+2
+ movwf t2 ; the AND mask 
+ andwf t0,W ; get slot number
+ subwf t2,F ; save it in t2
 load_note1
 ; first shift right until the slot is in bits 1:0
  brnz rotate_right_twice
  movlw 3
- andwf temp+1,F  ; W=note
+ andwf t1,F  ; W=note
  return
 rotate_right_twice
- rrf temp+1,F
- rrf temp+1,F
- decf temp+2,F
+ rrf t1,F
+ rrf t1,F
+ decf t2,F
  goto load_note1
 
 
 ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;
 ;; pseudo random number generator
 ;; 24 bits linear feedback shift register 
-;; rand+2 is loaded with cap_cnt at each button pressed
-;; to improve randomness.
 ;; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
 random:  
   bcf STATUS, C
@@ -560,7 +548,7 @@ wait_btn_release:
 
 
 ;;;;;;;;;;;;; note  ;;;;;;;;;;;;;
-; play a tone from tempered scale. 
+; play a musical note from tempered scale. 
 ; input:
 ;  w = note : encoding  bits 0-4 notes, note 0x1F=pause , bits 5-7 lapse
 ; period based on Tcy=1uSec
@@ -568,38 +556,38 @@ wait_btn_release:
 ; each path in half-cycle loop is 10Tcy;.
 ; values are based on this 10Tcy.
 note:
- movwf temp
+ movwf t0
  movlw 0x1F
- andwf temp,W
+ andwf t0,W
  xorlw 0x1F
  brz pause
  loadr16 delay, 0x0D40
  movlw 3
  movwf timeout
  movlw 0xE0
- andwf temp,W
- movwf temp+1
- swapf temp+1,F
- rrf temp+1,F
- movf temp+1,F
+ andwf t0,W
+ movwf t1
+ swapf t1,F
+ rrf t1,F
+ movf t1,F
  brz note02
 note01
  bcf STATUS,C
  rrf timeout
  rrf delay+1,F
  rrf delay,F
- decfsz temp+1
+ decfsz t1
  goto note01
 note02
  movlw 0x1F
- andwf temp,W
+ andwf t0,W
  call note_table
  movwf half_period
 note1
  movlw B'0100'
  xorwf GPIO, F  ; toggle output pin
  movfw half_period
- movwf temp
+ movwf t0
 note2
  decf delay,F
  comf delay,W
@@ -616,7 +604,7 @@ note2
 note3
  goto $+1
 note4
- decfsz temp
+ decfsz t0
  goto note2  ; half-cycle loop
  goto note1 ; half-cycle completed
 note5
@@ -624,25 +612,25 @@ note5
  return
  
 pause: ;musical pause
- swapf temp, F
+ swapf t0, F
  movlw 0xE
- andwf temp,F
- movfw temp
+ andwf t0,F
+ movfw t0
  call pause_table
  movwf delay
- incf temp,W
+ incf t0,W
  call pause_table
  movwf delay+1
  call delay_ms
  return
 
 
+    
 ;;;;;;;;;;;;;;;  INITIALIZATION CODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-init: ; hardware initialization
- movlw .12
- movwf OSCCAL
+ ; hardware initialization
+init:
  movlw OPTION_MASK
- option
+ option 
  led_off
  clrf notes_cnt
  movlw 0xA5
@@ -652,8 +640,13 @@ init: ; hardware initialization
 ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
 
 main:
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; power on self test
+;; light each LED in sequence
+;; witch sound.
+;;;;;;;;;;;;;;;;;;;;;;;; 
  clrf led
-post: ; power on self test
+post:
  call light_led
  movfw led
  call translate_table
@@ -663,10 +656,18 @@ post: ; power on self test
  goto post
  led_off
  call wait_btn_release
+next_set:
  clrf led
-; wait for a button down to start game 
-led_chase:    ;round robin led chase
- call light_led    ;until a button is pressed down or timeout occur
+ movlw .134
+ movwf timeout
+; wait for a button down to start game
+; light LEDs in sequence
+;until a button is pressed down or timeout occur 
+led_sweep:
+ decfsz timeout,F
+ goto $+2
+ sleep
+ call light_led
  loadr16 delay, .250
  call delay_ms
  incf led,F
@@ -674,7 +675,7 @@ led_chase:    ;round robin led chase
  andwf led,F
  call read_buttons
  skpneq btn_down, BTN_NONE
- goto led_chase
+ goto led_sweep
  led_off
  movfw timeout
  movwf rand
@@ -684,56 +685,22 @@ led_chase:    ;round robin led chase
 ; game loop.
 play_rand:
  movfw notes_cnt
- movwf temp
+ movwf t0
  incf notes_cnt,F
-;;;;;;  display sequence length in binary ;;;;;;;;;;;;;
-hi_nibble ; show high nibble
- movlw 3
- movwf led
- movfw notes_cnt
- movwf temp+3
- btfsc temp+3, 4
- call light_led
- loadr16 delay, .1000
- call delay_ms ; 1 second pause
- led_off
- swapf temp+3,F
- clrf timeout
- clrf led
-lo_nibble  ; show low nibble
- rlf temp+3,F
- skpnc
- call light_led
- incf led,F
- movlw 3
- andwf led,F
- skpz
- goto $+3
- swapf notes_cnt,W
- movwf temp+3
- loadr16 delay, .4
- call delay_ms
- decfsz timeout
- goto lo_nibble
-display_exit
- led_off
- loadr16 delay, .500 
- call delay_ms ; half seconde pause
-;;;; end display_count ;;;;;
-; add a random value to play sequence 
+; add a random value to sequence 
  call random
  movfw rand+2
  xorwf rand+1,W
  xorwf rand,W
  andlw 3
- movwf temp+1
+ movwf t1
  call store_note
- clrf temp+3 ; notes counter
+ clrf t3 ; notes counter
 ; play sequence loop 
 play_rand02:
- movfw temp+3
+ movfw t3
  call load_note
- movfw temp+1
+ movfw t1
  movwf led
  call light_led
  movfw led
@@ -742,16 +709,16 @@ play_rand02:
  led_off
  loadr16 delay, .100
  call delay_ms ; 1/10 second pause
- incf temp+3,F
+ incf t3,F
  movfw notes_cnt
- subwf temp+3,W
+ subwf t3,W
  skpz
  goto play_rand02
 ; wait player playing sequence back
 wait_playback:
- clrf temp+3 ; notes counter
+ clrf t3 ; notes counter
 wait01:
- movlw .255   ; maximun delay between each button 255 msec.
+ movlw .250   ; maximun delay between each button 250 msec.
  movwf timeout
 wait02: ; wait button loop
  loadr16 delay, .20
@@ -760,7 +727,7 @@ wait02: ; wait button loop
  movwf rand
  decf timeout,F
  skpnz
- goto playback_error
+ goto game_over
  call read_buttons
  skpneq btn_down, BTN_NONE
  goto wait02
@@ -778,15 +745,15 @@ wait02: ; wait button loop
  call note
  led_off
  call wait_btn_release
- movfw temp+3
+ movfw t3
  call load_note
  movfw led
- subwf temp+1
+ subwf t1
  skpz
- goto playback_error
- incf temp+3,F
+ goto game_over ; not the good one
+ incf t3,F
  movfw notes_cnt
- subwf temp+3,W
+ subwf t3,W
  skpz
  goto wait01 ; loop to wait for next button
 playback_success
@@ -800,22 +767,23 @@ playback_success
  call delay_ms
  goto play_rand
 ; play rocky_theme at 6,12,18,24 and 32 length success.
+; more notes of the theme are played at each milestone. 
 victory:
  movfw notes_cnt
  goto play_victory_theme
 victory_final:
  clrf notes_cnt
  movlw .40
-play_victory_theme
- movwf temp+2
- clrf temp+3
+play_victory_theme:
+ movwf t2
+ clrf t3
 prt01:
- movfw temp+3
+ movfw t3
  call rocky_theme
  call note
- incf temp+3,F
- movfw temp+2
- subwf temp+3,W
+ incf t3,F
+ movfw t2
+ subwf t3,W
  skpz
  goto prt01
  loadr16 delay, 0x400
@@ -823,14 +791,68 @@ prt01:
  goto play_rand
 
 ; player failed to repeat sequence
-; game over. Reset to beginning 
-playback_error:
+game_over:
  movlw B'01011000'
- call note
- clrf notes_cnt
- clrf led
- goto led_chase
+ call note ; audio alert game over
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; display sequence length
+;; BLUE is 25
+;; YELLOW is 10
+;; RED is 5
+;; GREEN is 1
+;; length=NB*25+NY*10+NR*5+NG
+;; where Nx is number of blink of
+;; each LED.
+;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+#define len notes_cnt
+ decf len,F
+display_length:
+ movf len,F
+ skpnz
+ goto wait1sec
+ movlw 3
+ movwf led
+ movlw .25
+ subwf len,W
+ skpc
+ goto lt25 ; <25
+ movwf len
+ goto blink_led
+lt25:
+ decf led,F
+ movlw .10
+ subwf len,W
+ skpc
+ goto lt10; <10
+ movwf len
+ goto blink_led
+lt10:
+ decf led,F
+ movlw .5
+ subwf len,W
+ skpc
+ goto lt5 ; <5
+ movwf len
+ goto blink_led
+lt5:
+ decf led,F
+ decf len,F
+blink_led:
+ call light_led
+ loadr16 delay, .500
+ call delay_ms ; 500 msec pause
+ led_off
+ loadr16 delay, .500
+ call delay_ms ; 500 msec pause
+ goto display_length
+;wait 1 second before resuming
+;to next_set 
+wait1sec:
+ loadr16 delay, .1000
+ call delay_ms
+ goto next_set
  
  end
+ 
 
 

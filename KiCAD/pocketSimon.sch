@@ -608,4 +608,6 @@ Text Label 6350 3700 0    39   ~ 0
 Vss
 Text Label 5250 3700 2    39   ~ 0
 Vdd
+Wire Wire Line
+	5050 4250 5050 4300
 $EndSCHEMATC

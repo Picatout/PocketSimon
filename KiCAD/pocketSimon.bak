@@ -600,4 +600,12 @@ Text Label 8450 5000 2    60   ~ 0
 PCLK
 Text Label 6350 3600 0    39   ~ 0
 Vpp
+Text Label 6350 3900 0    39   ~ 0
+PDAT
+Text Label 5100 3900 0    39   ~ 0
+PCLK
+Text Label 6350 3700 0    39   ~ 0
+Vss
+Text Label 5250 3700 2    39   ~ 0
+Vdd
 $EndSCHEMATC
