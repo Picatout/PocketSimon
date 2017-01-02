@@ -72,9 +72,36 @@ to charge from 0 volt to logic level **1**. The reading sequence consist of disc
 time it take for **GP3** to go from a **0** logic level to a **1** logic level. There maybe some variability from MCU to MCU and 
 also due to **C3** capacitor tolerance on vallue. So the constant GRN_CNT defined is the software may have to be adjusted by testing.
 See source code for more information. 
+
+![assembly board](/documents/prototype.png)
  
-## Software description
-__to do__
+## game description
+
+ At power up the MCU initialize the hardware then execute a power on selft test (**POST**). After the **POST** the 4 LEDs continue
+ to light in sequence GREEN-RED-YELLOW-BLUE until the player press a button to start game or a timeout occur which happen about 35
+ seconds of idle time. At timeout the MCU is resarted, the POST playing again. 
+
+ At button pressed down start the game with a single note. Then at each repeat success a sequence length is increment by a new random
+note. At length 6,12,18,24,32 a tune a played to mark your acheivement. The maximum sequence length is 32 limited by RAM available. But 
+if you got that far you are a real champion and you can listen to the complete Rocky 1 movie musical theme.
+ 
+ At then of of game the length of last sequence succeeded is displayed in the following way.
+ Each LED is assigned a value and blink for multiple of this value. Adding the blinks the total count.
+
+ LEDs | value
+ ---- | -----
+ BLUE | 25
+ YELLOW | 10
+ RED | 5
+ GREEN | 1
+
+  count = NB*25+NY*10+NR*5+NG 
+  where N is number of blinks.
+ 
+## software
+ This source code is int totality in file  **PocketSimone.asm** and is well documented (I think). It use 100% of RAM and 100% of
+ program space which is 768 bytes. 
+ 
  
 ## licence
 *  software licence: GPLv3
