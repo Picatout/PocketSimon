@@ -96,7 +96,8 @@ if you got that far you are a real champion and you can listen to the complete R
  GREEN | 1
 
   count = NB * 25 + NY * 10 + NR * 5 + NG 
-  where N is number of blinks.
+  
+  where Nx is number of blinks of the colour.
  
 ## software
  This source code is int totality in file  **PocketSimone.asm** and is well documented (I think). It use 100% of RAM and 100% of
