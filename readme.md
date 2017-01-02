@@ -77,6 +77,11 @@ time it take for **GP3** to go from a **0** logic level to a **1** logic level. 
 also due to **C3** capacitor tolerance on vallue. So the constant GRN_CNT defined is the software may have to be adjusted by testing.
 See source code for more information. 
 
+ The assembly is on single side perforated board with copper rings. I didn't design any layout before hand as the assembly is quite
+ simple. I drawn this one after I completed the assembly.
+ 
+![board layout](/documents/board layout.png)
+
 ![assembly board](/documents/prototype.png)
  
 ## game description
