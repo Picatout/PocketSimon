@@ -100,7 +100,7 @@ if you got that far you are a real champion and you can listen to the complete R
   where Nx is number of blinks of the colour.
  
 ## software
- This source code is in totality in file  **PocketSimone.asm** and is well documented (I think). It use 100% of RAM and 100% of
+ This source code is in totality in file  **PocketSimon.asm** and is well documented (I think). It use 100% of RAM and 100% of
  program space which is 768 bytes. 
  
  
