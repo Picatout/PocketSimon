@@ -54,7 +54,7 @@ Simon game implemented on a PIC10F202
 
 ## Hardware description
 
-	The circuit is powered by a 3 volt button cell of CR2032 model  through **SW1** power switch. Capacitor **C1** should be 
+ The circuit is powered by a 3 volt button cell of CR2032 model  through **SW1** power switch. Capacitor **C1** should be 
 soldered closest as possible to MCU power pins **Vdd** and **Vss**. Each LED as a 1K resistor in serie to reduce current drain on
 the lithium cell. These are connected between the power rail by pair in serie with the midpoint connected to GPIO. **GP1** is at
 midpoint between RED and GREEN LEDs and **GP0** is at midpoint between BLUE en YELLOW LEDs. This enable to control 2 LEDs with
