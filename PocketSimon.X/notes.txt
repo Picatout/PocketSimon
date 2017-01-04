@@ -1,0 +1,6 @@
+2017-01-02
+==========
+begin size optimisation
+removed pause_table and modified pause subroutine, save 7 instructions.
+removed led_tris_table, modified led_gpio_table to include data that was in led_tris_table and modified
+led_on subroutine, saved another 5 instructions.

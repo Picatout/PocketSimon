@@ -197,8 +197,11 @@ case macro  n, address  ; go to address if W==n
  xorlw n ; reset W for next case
  endm
 
-
-loadr16 macro r16, n  ; load r16 with constant
+; load 16 bits variable with constant
+; use conditional assembly to optimize size
+; depending on constant value.
+; resulting code size is between 2 and 4 instructions 
+loadr16 macro r16, n 
  local h,l
  h=high n
  l=low n
@@ -232,6 +235,12 @@ loadr16 macro r16, n  ; load r16 with constant
   t2 res 1
   t3 res 1
 
+; access to higher bytes of multibytes variables 
+#define delayH delay+1
+#define timeoutH timeout+1
+#define randH rand+1
+#define randU rand+2
+ 
   code 
 ;;;;;;;;;;;;;;;;;;; CODE SEGMENT ;;;;;;;;;;;;;;;;;;
     org 0
@@ -240,7 +249,7 @@ loadr16 macro r16, n  ; load r16 with constant
 ;;;;;;;;;;    delay_ms  ;;;;;;;;;;;;;;;;;;
 ; delay in miliseconds
 ; delay = value in msec
-#define delayH delay+1
+
 delay_ms:
  movlw .7
  movwf TMR0
@@ -340,18 +349,18 @@ rocky_theme:
  ; led GPIO value for each led
 led_gpio_table:
  addwf PCL,F
- dt GREEN_GPIO
- dt RED_GPIO
- dt YELLOW_GPIO
- dt BLUE_GPIO
+ dt GREEN_GPIO + (RED_GREEN_TRIS<<4)
+ dt RED_GPIO + (RED_GREEN_TRIS<<4)
+ dt YELLOW_GPIO + (YELLOW_BLUE_TRIS<<4)
+ dt BLUE_GPIO + (YELLOW_BLUE_TRIS<<4)
  
 ; TRIS value for each led
-led_tris_table: 
- addwf PCL,F
- dt RED_GREEN_TRIS
- dt RED_GREEN_TRIS
- dt YELLOW_BLUE_TRIS
- dt YELLOW_BLUE_TRIS
+;led_tris_table: 
+; addwf PCL,F
+; dt RED_GREEN_TRIS
+; dt RED_GREEN_TRIS
+; dt YELLOW_BLUE_TRIS
+; dt YELLOW_BLUE_TRIS
 
 ;;;;;;;  led_on  ;;;;;;;
 ;; light LED  
@@ -363,8 +372,8 @@ led_on:
  movfw led
  call led_gpio_table
  movwf GPIO
- movfw led
- call led_tris_table
+ movwf TMR0 ; use TMR0 as temporary storage
+ swapf TMR0,W
  tris GPIO
  return
 
@@ -537,14 +546,14 @@ rotate_right_twice:
 ;; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 random:  
-  bcf STATUS, C
-  rrf rand+2,F
-  rrf rand+1,F
+  clrc
+  rrf randU,F
+  rrf randH,F
   rrf rand,F
   skpc
   return
   movlw 0xE1
-  xorwf rand+2, F
+  xorwf randU, F
   return
 
 ;;;;;;;;;;   wait_btn_release  ;;;;;
@@ -719,8 +728,8 @@ play_rand:
  incf notes_cnt,F
 ; add a random value to sequence 
  call random
- movfw rand+2
- xorwf rand+1,W
+ movfw randU
+ xorwf randH,W
  xorwf rand,W
  andlw 3
  movwf t1
