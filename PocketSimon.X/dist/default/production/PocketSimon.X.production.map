@@ -1,11 +1,11 @@
 MPLINK 5.08, LINKER
-Linker Map File - Created Mon Jan 02 13:08:24 2017
+Linker Map File - Created Tue Jan 03 22:32:17 2017
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
                 ---------  ---------  ---------  ---------  ---------
-                   .org_0       code   0x000000    program   0x0003fa
-                   .cinit    romdata   0x0001fd    program   0x000004
+                   .org_0       code   0x000000    program   0x0003ec
+                   .cinit    romdata   0x0001f6    program   0x000004
 .config_0FFF_BUILD/DEFAULT/PRODUCTION/POCKETS       code   0x000fff    program   0x000002
                    .udata      udata   0x000008       data   0x000018
 
@@ -14,9 +14,9 @@ Linker Map File - Created Mon Jan 02 13:08:24 2017
                               Program Memory Usage 
                                Start         End      
                            ---------   ---------      
-                            0x000000    0x0001fe      
+                            0x000000    0x0001f7      
                             0x000fff    0x000fff      
-            512 out of 517 program addresses used, program memory utilization is 99%
+            505 out of 517 program addresses used, program memory utilization is 97%
 
 
 
@@ -24,58 +24,59 @@ Linker Map File - Created Mon Jan 02 13:08:24 2017
                      Name    Address   Location    Storage File                     
                 ---------  ---------  ---------  --------- ---------                
              _.org_0_0005   0x000005    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-             _.org_0_010C   0x00010c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                blink_led   0x0001e9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+             _.org_0_00FF   0x0000ff    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                blink_led   0x0001e2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                  delay_ms   0x000001    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           display_length   0x0001ce    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                game_over   0x0001cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     init   0x00011d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               keep_going   0x000136    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           led_gpio_table   0x000062    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   led_on   0x00006c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                led_sweep   0x000133    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           led_tris_table   0x000067    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                load_note   0x0000b6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               load_note1   0x0000c6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     lt10   0x0001e0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     lt25   0x0001d9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                      lt5   0x0001e7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     main   0x000125    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                 next_set   0x000130    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     note   0x0000de    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   note01   0x0000f2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   note02   0x0000f8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note1   0x0000fc    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note2   0x000100    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note3   0x00010c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note4   0x00010d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note5   0x000110    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               note_table   0x00001f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    pause   0x000112    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              pause_table   0x00000d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                play_rand   0x00014d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              play_rand02   0x000158    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-       play_victory_theme   0x0001b8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-         playback_success   0x000199    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     post   0x000126    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    prt01   0x0001ba    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   random   0x0000cf    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    rbtn1   0x000076    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    rbtn3   0x000081    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-             read_buttons   0x000073    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              rocky_theme   0x000039    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-       rotate_right_twice   0x0000cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-          shift_left_slot   0x0000ae    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               store_note   0x000096    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              store_note1   0x0000a7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-          translate_table   0x00001a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                  victory   0x0001b4    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-            victory_final   0x0001b6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   wait01   0x00016c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   wait02   0x00016e    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                 wait1sec   0x0001f7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-         wait_btn_release   0x0000d8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-            wait_playback   0x00016b    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           display_length   0x0001c7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                game_over   0x0001c4    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     init   0x000116    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               keep_going   0x00012f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           led_gpio_table   0x000055    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   led_on   0x00005f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                led_sweep   0x00012c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           led_tris_table   0x00005a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                load_note   0x0000a9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               load_note1   0x0000b9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     lt10   0x0001d9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     lt25   0x0001d2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                      lt5   0x0001e0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     main   0x00011e    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                 next_set   0x000129    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     note   0x0000d1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   note01   0x0000e5    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   note02   0x0000eb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note1   0x0000ef    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note2   0x0000f3    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note3   0x0000ff    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note4   0x000100    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note5   0x000103    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               note_table   0x000012    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    pause   0x000105    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  pause00   0x00010f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  pause01   0x000114    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                play_rand   0x000146    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              play_rand02   0x000151    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+       play_victory_theme   0x0001b1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+         playback_success   0x000192    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     post   0x00011f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    prt01   0x0001b3    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   random   0x0000c2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    rbtn1   0x000069    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    rbtn3   0x000074    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+             read_buttons   0x000066    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              rocky_theme   0x00002c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+       rotate_right_twice   0x0000be    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+          shift_left_slot   0x0000a1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               store_note   0x000089    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              store_note1   0x00009a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+          translate_table   0x00000d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  victory   0x0001ad    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+            victory_final   0x0001af    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   wait01   0x000165    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   wait02   0x000167    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                 wait1sec   0x0001f0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+         wait_btn_release   0x0000cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+            wait_playback   0x000164    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                  btn_down   0x000008       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                   cap_cnt   0x00000f       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                     delay   0x00000a       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
@@ -97,57 +98,58 @@ Linker Map File - Created Mon Jan 02 13:08:24 2017
                 ---------  ---------  ---------  --------- ---------                
                  delay_ms   0x000001    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
              _.org_0_0005   0x000005    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              pause_table   0x00000d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-          translate_table   0x00001a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               note_table   0x00001f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              rocky_theme   0x000039    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           led_gpio_table   0x000062    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           led_tris_table   0x000067    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   led_on   0x00006c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-             read_buttons   0x000073    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    rbtn1   0x000076    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    rbtn3   0x000081    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               store_note   0x000096    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              store_note1   0x0000a7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-          shift_left_slot   0x0000ae    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                load_note   0x0000b6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               load_note1   0x0000c6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-       rotate_right_twice   0x0000cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   random   0x0000cf    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-         wait_btn_release   0x0000d8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     note   0x0000de    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   note01   0x0000f2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   note02   0x0000f8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note1   0x0000fc    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note2   0x000100    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note3   0x00010c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-             _.org_0_010C   0x00010c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note4   0x00010d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    note5   0x000110    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    pause   0x000112    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     init   0x00011d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     main   0x000125    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     post   0x000126    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                 next_set   0x000130    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                led_sweep   0x000133    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-               keep_going   0x000136    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                play_rand   0x00014d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-              play_rand02   0x000158    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-            wait_playback   0x00016b    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   wait01   0x00016c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                   wait02   0x00016e    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-         playback_success   0x000199    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                  victory   0x0001b4    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-            victory_final   0x0001b6    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-       play_victory_theme   0x0001b8    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                    prt01   0x0001ba    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                game_over   0x0001cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-           display_length   0x0001ce    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     lt25   0x0001d9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                     lt10   0x0001e0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                      lt5   0x0001e7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                blink_led   0x0001e9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
-                 wait1sec   0x0001f7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+          translate_table   0x00000d    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               note_table   0x000012    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              rocky_theme   0x00002c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           led_gpio_table   0x000055    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           led_tris_table   0x00005a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   led_on   0x00005f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+             read_buttons   0x000066    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    rbtn1   0x000069    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    rbtn3   0x000074    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               store_note   0x000089    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              store_note1   0x00009a    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+          shift_left_slot   0x0000a1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                load_note   0x0000a9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               load_note1   0x0000b9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+       rotate_right_twice   0x0000be    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   random   0x0000c2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+         wait_btn_release   0x0000cb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     note   0x0000d1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   note01   0x0000e5    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   note02   0x0000eb    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note1   0x0000ef    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note2   0x0000f3    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note3   0x0000ff    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+             _.org_0_00FF   0x0000ff    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note4   0x000100    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    note5   0x000103    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    pause   0x000105    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  pause00   0x00010f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  pause01   0x000114    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     init   0x000116    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     main   0x00011e    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     post   0x00011f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                 next_set   0x000129    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                led_sweep   0x00012c    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+               keep_going   0x00012f    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                play_rand   0x000146    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+              play_rand02   0x000151    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+            wait_playback   0x000164    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   wait01   0x000165    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                   wait02   0x000167    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+         playback_success   0x000192    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                  victory   0x0001ad    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+            victory_final   0x0001af    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+       play_victory_theme   0x0001b1    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                    prt01   0x0001b3    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                game_over   0x0001c4    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+           display_length   0x0001c7    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     lt25   0x0001d2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                     lt10   0x0001d9    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                      lt5   0x0001e0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                blink_led   0x0001e2    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
+                 wait1sec   0x0001f0    program     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                  btn_down   0x000008       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                       led   0x000009       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm
                     delay   0x00000a       data     static C:\Users\Jacques\Documents\GitHub\pocketsimon\PocketSimon.X\PocketSimon.asm

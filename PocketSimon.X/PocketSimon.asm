@@ -256,21 +256,6 @@ delay_ms:
  return
  
 
-pause_table: ; pause length in milliseconds
- addwf PCL, F
- dt low .2000   ;1
- dt high .2000
- dt low .1000    ;1/2
- dt high .1000
- dt low .500    ;1/4
- dt high .500
- dt low .250     ;1/8
- dt high .250
- dt low .125    ;1/16
- dt high .125
- dt low .64     ;1/32
- dt high .64
-
 translate_table: ;translate button to corresponding note
  addwf PCL, F
  dt GREEN_NOTE
@@ -645,15 +630,20 @@ note5:
 ;; tone subroutine branch here.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 pause: ;musical pause
- swapf t0, F
- movlw 0xE
+ loadr16 delay, 2000
+ swapf t0,F
+ rrf t0,F
+ movlw 0x7
  andwf t0,F
- movfw t0
- call pause_table
- movwf delay
- incf t0,W
- call pause_table
- movwf delay+1
+ skpnz
+ goto pause01
+pause00: 
+ clrc
+ rrf delay+1,F
+ rrf delay,F
+ decfsz t0,F
+ goto pause00
+pause01: 
  call delay_ms
  return
 
@@ -842,7 +832,7 @@ prt01:
  
 ; player failed to repeat sequence
 game_over:
- movlw B'01011000'
+ movlw B'00111000'
  call note ; audio alert game over
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; display sequence length
