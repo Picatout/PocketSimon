@@ -1,4 +1,4 @@
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  1
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00051 ;    (at your option) any later version.
                       00052 ;
                       00053 ;    This program is distributed in the hope that it will be useful,
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  2
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00094 #define BTN_GREEN  0
                       00095 #define BTN_RED    1
                       00096 #define BTN_YELLOW 2
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  3
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -151,7 +151,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00123 ; GRN_CNT value.
                       00124 ; On the contrary if YELLOW LED
                       00125 ; turn on decrease GRN_CNT value.                              
-                      00126 #define GRN_CNT 20
+                      00126 #define GRN_CNT 32
                       00127 #define RED_CNT 2*GRN_CNT
                       00128 #define YEL_CNT 3*GRN_CNT
                       00129 #define BLUE_CNT 4*GRN_CNT
@@ -173,981 +173,881 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00145  bcf AUDIO
                       00146  endm
                       00147 
-                      00148 clamp_on macro
-                      00149  bsf CLAMP
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  4
+                      00148 ; keep C3 capacitor discharged 
+                      00149 clamp_on macro
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00150  endm
-                      00151 
-                      00152 clamp_off macro
-                      00153  bcf CLAMP
-                      00154  endm
-                      00155 
-                      00156 brz macro address  ; branch on zero flag
-                      00157  skpnz
-                      00158  goto address
-                      00159  endm
-                      00160 
-                      00161 brnz macro address ; branch on not zero flag
-                      00162  skpz
-                      00163  goto address
-                      00164  endm
-                      00165 
-                      00166 brc macro address ; branch on carry flag
-                      00167  skpnc
-                      00168  goto address
-                      00169  endm
-                      00170 
-                      00171 brnc macro address ; branch on not carry flag
-                      00172  skpc
-                      00173  goto address
-                      00174  endm
-                      00175 
-                      00176 skpeq macro var, val ; skip next instruction if variable == val
-                      00177   movlw val
-                      00178   xorwf var, W
-                      00179   skpz
-                      00180   endm
-                      00181 
-                      00182 skpneq macro var, val ; skip next instruction if variable!=val
-                      00183  movlw val
-                      00184  xorwf var, W
-                      00185  skpnz
-                      00186  endm
-                      00187 
-                      00188 
-                      00189 ; switch marco
-                      00190 switch macro var ; put variable in W for use by following case
-                      00191  movfw var
-                      00192  endm
-                      00193 
-                      00194 case macro  n, address  ; go to address if W==n
-                      00195  xorlw n
-                      00196  brz address
-                      00197  xorlw n ; reset W for next case
-                      00198  endm
-                      00199 
-                      00200 ; load 16 bits variable with constant
-                      00201 ; use conditional assembly to optimize size
-                      00202 ; depending on constant value.
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  5
+                      00150  bsf CLAMP
+                      00151  endm
+                      00152 
+                      00153 ; enable C3 capacitor to charge. 
+                      00154 clamp_off macro
+                      00155  bcf CLAMP
+                      00156  endm
+                      00157 
+                      00158 ; switch marco
+                      00159 switch macro var ; put variable in W for use by following case
+                      00160  movfw var
+                      00161  endm
+                      00162 
+                      00163 case macro  n, address  ; go to address if W==n
+                      00164  xorlw n
+                      00165  skpnz
+                      00166  goto address
+                      00167  xorlw n ; reset W for next case
+                      00168  endm
+                      00169 
+                      00170 ; load 16 bits variable with constant
+                      00171 ; use conditional assembly to optimize size
+                      00172 ; depending on constant value.
+                      00173 ; resulting code size is between 2 and 4 instructions 
+                      00174 loadr16 macro r16, n 
+                      00175  local h,l
+                      00176  h=high n
+                      00177  l=low n
+                      00178  if l==0
+                      00179    clrf r16
+                      00180  else
+                      00181    movlw low n
+                      00182    movwf r16
+                      00183  endif
+                      00184  if h==0
+                      00185    clrf r16+1
+                      00186  else
+                      00187    movlw h
+                      00188    movwf r16+1
+                      00189  endif
+                      00190  endm
+                      00191 
+                      00192 ;;;;;;;;;;;;;;;; VARIABLES  ;;;;;;;;;;;;;;;;;;;;;
+                      00193     udata
+0000                  00194   btn_down res 1  ; which button is down
+0001                  00195   led res 1 ; active led value
+0002                  00196   delay res 2 ; delay counter used by delay_ms subroutine.
+0004                  00197   half_period res 1 ; note half-period delay
+0005                  00198   timeout res 2 ; inactivity timeout
+0007                  00199   cap_cnt res 1 ; capacitor charge time
+0008                  00200   notes_cnt res 1 ; sequence length
+0009                  00201   rand res 3 ; pseudo random number generator register
+000C                  00202   tune_array res 8 ; note sequence array maximun 32 notes. 2 bits used per note.
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00203 ; resulting code size is between 2 and 4 instructions 
-                      00204 loadr16 macro r16, n 
-                      00205  local h,l
-                      00206  h=high n
-                      00207  l=low n
-                      00208  if l==0
-                      00209    clrf r16
-                      00210  else
-                      00211    movlw low n
-                      00212    movwf r16
-                      00213  endif
-                      00214  if h==0
-                      00215    clrf r16+1
-                      00216  else
-                      00217    movlw h
-                      00218    movwf r16+1
-                      00219  endif
-                      00220  endm
-                      00221 
-                      00222 ;;;;;;;;;;;;;;;; VARIABLES  ;;;;;;;;;;;;;;;;;;;;;
-                      00223     udata
-0000                  00224   btn_down res 1  ; which button is down
-0001                  00225   led res 1 ; active led value
-0002                  00226   delay res 2 ; delay counter used by delay_ms subroutine.
-0004                  00227   half_period res 1 ; note half-period delay
-0005                  00228   timeout res 2 ; inactivity timeout
-0007                  00229   cap_cnt res 1 ; capacitor charge time
-0008                  00230   notes_cnt res 1 ; sequence length
-0009                  00231   rand res 3 ; pseudo random number generator register
-000C                  00232   tune_array res 8 ; note sequence array maximun 32 notes. 2 bits used per note.
-0014                  00233   t0 res 1 ; temporary storage
-0015                  00234   t1 res 1 
-0016                  00235   t2 res 1
-0017                  00236   t3 res 1
-                      00237 
-                      00238 ; access to higher bytes of multibytes variables 
-                      00239 #define delayH delay+1
-                      00240 #define timeoutH timeout+1
-                      00241 #define randH rand+1
-                      00242 #define randU rand+2
-                      00243  
-                      00244   code 
-                      00245 ;;;;;;;;;;;;;;;;;;; CODE SEGMENT ;;;;;;;;;;;;;;;;;;
-                      00246     org 0
-0000   0A??           00247  goto init
-                      00248 
-                      00249 ;;;;;;;;;;    delay_ms  ;;;;;;;;;;;;;;;;;;
-                      00250 ; delay in miliseconds
-                      00251 ; delay = value in msec
-                      00252 
-0001                  00253 delay_ms:
-0001   0C07           00254  movlw .7
-0002   0021           00255  movwf TMR0
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  6
+0014                  00203   t0 res 1 ; temporary storage
+0015                  00204   t1 res 1 
+0016                  00205   t2 res 1
+0017                  00206   t3 res 1
+                      00207 
+                      00208 ; access to higher bytes of multibytes variables 
+                      00209 #define delayH delay+1
+                      00210 #define timeoutH timeout+1
+                      00211 #define randH rand+1
+                      00212 #define randU rand+2
+                      00213  
+                      00214   code 
+                      00215 ;;;;;;;;;;;;;;;;;;; CODE SEGMENT ;;;;;;;;;;;;;;;;;;
+                      00216     org 0
+0000   0A??           00217  goto init
+                      00218 
+                      00219 ;;;;;;;;;;    delay_ms  ;;;;;;;;;;;;;;;;;;
+                      00220 ; delay in miliseconds
+                      00221 ; delay = value in msec
+                      00222 
+0001                  00223 delay_ms:
+0001   0C07           00224  movlw .7
+0002   0021           00225  movwf TMR0
+0003   0201           00226  movfw TMR0
+0004   0743           00227  skpz
+0005   0A??           00228  goto $-2
+0006   0C01           00229  movlw 1
+0007   00??           00230  subwf delay,F
+0008   0703           00231  skpc
+0009   00??           00232  subwf delayH,F
+000A   0603           00233  skpnc
+000B   0A??           00234  goto delay_ms
+000C   0800           00235  return
+                      00236  
+                      00237 ;translate button to corresponding note
+000D                  00238 translate_table:
+000D   01E2           00239  addwf PCL, F
+000E   0840           00240  dt GREEN_NOTE
+000F   0845           00241  dt RED_NOTE
+0010   0849           00242  dt YELLOW_NOTE
+0011   084C           00243  dt BLUE_NOTE
+                      00244 
+                      00245 ; tempered scale half-period values 
+0012                  00246 note_table: 
+0012   01E2           00247  addwf PCL, F
+0013   08FE           00248  dt .254  ; G2     blue note (0)
+0014   08F0           00249  dt .240  ; G#2
+0015   08E2           00250  dt .226  ; A2
+0016   08D6           00251  dt .214  ; A#2
+0017   08C9           00252  dt .201  ; B2
+0018   08BE           00253  dt .190  ; C3     yellow note (5)
+0019   08B3           00254  dt .179  ; C#3
+001A   08A9           00255  dt .169  ; D3
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0003   0201           00256  movfw TMR0
-0004   0743           00257  skpz
-0005   0A??           00258  goto $-2
-0006   0C01           00259  movlw 1
-0007   00??           00260  subwf delay,F
-0008   0703           00261  skpc
-0009   00??           00262  subwf delayH,F
-000A   0603           00263  skpnc
-000B   0A??           00264  goto delay_ms
-000C   0800           00265  return
-                      00266  
-                      00267 
-000D                  00268 translate_table: ;translate button to corresponding note
-000D   01E2           00269  addwf PCL, F
-000E   0840           00270  dt GREEN_NOTE
-000F   0845           00271  dt RED_NOTE
-0010   0849           00272  dt YELLOW_NOTE
-0011   084C           00273  dt BLUE_NOTE
-                      00274 
-0012                  00275 note_table: ; tempered scale
-0012   01E2           00276  addwf PCL, F
-0013   08FE           00277  dt .254  ; G3     blue note (0)
-0014   08F0           00278  dt .240  ; G#3
-0015   08E2           00279  dt .226  ; A3
-0016   08D6           00280  dt .214  ; A#3
-0017   08C9           00281  dt .201  ; B3
-0018   08BE           00282  dt .190  ; C4     yellow note (5)
-0019   08B3           00283  dt .179  ; C#4
-001A   08A9           00284  dt .169  ; D4
-001B   08A0           00285  dt .160  ; D#4
-001C   0897           00286  dt .151  ; E4     red note (9)
-001D   088E           00287  dt .142  ; F4
-001E   0886           00288  dt .134  ; F#4
-001F   087F           00289  dt .127  ; G4     green note (12)
-0020   0877           00290  dt .119  ; G#4
-0021   0871           00291  dt .113  ; A4
-0022   086A           00292  dt .106  ; A#4
-0023   0864           00293  dt .100  ; B4
-0024   085F           00294  dt .95   ; C5
-0025   0859           00295  dt .89   ; C#5
-0026   0854           00296  dt .84   ; D5
-0027   084F           00297  dt .79   ; D#5
-0028   084B           00298  dt .75   ; E5
-0029   0847           00299  dt .71   ; F5
-002A   0843           00300  dt .67   ; F#5
-002B   083F           00301  dt .63   ; G5
-                      00302 
-                      00303 ; rocky 1 movie theme 
-002C                  00304 rocky_theme:
-002C   01E2           00305  addwf PCL,F
-002D   0889           00306  dt B'10001001' ; 16e
-002E   086B           00307  dt B'01101011' ; 8g
-002F   089F           00308  dt B'10011111' ; 16p
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  7
+001B   08A0           00256  dt .160  ; D#3
+001C   0897           00257  dt .151  ; E3     red note (9)
+001D   088E           00258  dt .142  ; F3
+001E   0886           00259  dt .134  ; F#3
+001F   087F           00260  dt .127  ; G3     green note (12)
+0020   0877           00261  dt .119  ; G#3
+0021   0871           00262  dt .113  ; A3
+0022   086A           00263  dt .106  ; A#3
+0023   0864           00264  dt .100  ; B3
+0024   085F           00265  dt .95   ; C4
+0025   0859           00266  dt .89   ; C#4
+0026   0854           00267  dt .84   ; D4
+0027   084F           00268  dt .79   ; D#4
+0028   084B           00269  dt .75   ; E4
+0029   0847           00270  dt .71   ; F4
+002A   0843           00271  dt .67   ; F#4
+002B   083F           00272  dt .63   ; G4
+                      00273 
+                      00274 ; rocky 1 movie theme 
+002C                  00275 rocky_theme:
+002C   01E2           00276  addwf PCL,F
+002D   0889           00277  dt B'10001001' ; 16e
+002E   086B           00278  dt B'01101011' ; 8g
+002F   089F           00279  dt B'10011111' ; 16p
+0030   082E           00280  dt B'00101110' ; 2a
+0031   087F           00281  dt B'01111111' ; 8p
+0032   088E           00282  dt B'10001110' ; 16a
+0033   0870           00283  dt B'01110000' ; 8b
+0034   089F           00284  dt B'10011111' ; 16p
+0035   0829           00285  dt B'00101001' ; 2e
+0036   089F           00286  dt B'10011111' ; 16p
+0037   08BF           00287  dt B'10111111' ; 32p
+0038   0889           00288  dt B'10001001' ; 16e
+0039   086B           00289  dt B'01101011' ; 8g
+003A   089F           00290  dt B'10011111' ; 16p
+003B   082E           00291  dt B'00101110' ; 2a
+003C   089F           00292  dt B'10011111' ; 16p
+003D   08BF           00293  dt B'10111111' ; 32p
+003E   088E           00294  dt B'10001110' ; 16a
+003F   0870           00295  dt B'01110000' ; 8b
+0040   089F           00296  dt B'10011111' ; 16p
+0041   0809           00297  dt B'00001001' ; 1e
+0042   087F           00298  dt B'01111111' ; 8p
+0043   089F           00299  dt B'10011111' ; 16p
+0044   0887           00300  dt B'10000111' ; 16d4
+0045   0885           00301  dt B'10000101' ; 16c4
+0046   0867           00302  dt B'01100111' ; 8d4
+0047   089F           00303  dt B'10011111' ; 16p
+0048   0891           00304  dt B'10010001' ; 16c5
+0049   0893           00305  dt B'10010011' ; 16d5
+004A   0855           00306  dt B'01010101' ; 4e5
+004B   085F           00307  dt B'01011111' ; 4p
+004C   0891           00308  dt B'10010001' ; 16c5
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0030   082E           00309  dt B'00101110' ; 2a
-0031   087F           00310  dt B'01111111' ; 8p
-0032   088E           00311  dt B'10001110' ; 16a
-0033   0870           00312  dt B'01110000' ; 8b
-0034   089F           00313  dt B'10011111' ; 16p
-0035   0829           00314  dt B'00101001' ; 2e
-0036   089F           00315  dt B'10011111' ; 16p
-0037   08BF           00316  dt B'10111111' ; 32p
-0038   0889           00317  dt B'10001001' ; 16e
-0039   086B           00318  dt B'01101011' ; 8g
-003A   089F           00319  dt B'10011111' ; 16p
-003B   082E           00320  dt B'00101110' ; 2a
-003C   089F           00321  dt B'10011111' ; 16p
-003D   08BF           00322  dt B'10111111' ; 32p
-003E   088E           00323  dt B'10001110' ; 16a
-003F   0870           00324  dt B'01110000' ; 8b
-0040   089F           00325  dt B'10011111' ; 16p
-0041   0809           00326  dt B'00001001' ; 1e
-0042   087F           00327  dt B'01111111' ; 8p
-0043   089F           00328  dt B'10011111' ; 16p
-0044   0887           00329  dt B'10000111' ; 16d4
-0045   0885           00330  dt B'10000101' ; 16c4
-0046   0867           00331  dt B'01100111' ; 8d4
-0047   089F           00332  dt B'10011111' ; 16p
-0048   0891           00333  dt B'10010001' ; 16c5
-0049   0893           00334  dt B'10010011' ; 16d5
-004A   0855           00335  dt B'01010101' ; 4e5
-004B   085F           00336  dt B'01011111' ; 4p
-004C   0891           00337  dt B'10010001' ; 16c5
-004D   0891           00338  dt B'10010001' ; 16c5
-004E   0870           00339  dt B'01110000' ; 8b
-004F   0890           00340  dt B'10010000' ; 16b
-0050   086E           00341  dt B'01101110' ; 8a
-0051   088E           00342  dt B'10001110' ; 16a
-0052   084B           00343  dt B'01001011' ; 4g
-0053   0876           00344  dt B'01110110' ; 8f5
-0054   0815           00345  dt B'00010101' ; 1e5
-                      00346 
-                      00347 
-                      00348 
-                      00349  ; led GPIO value for each led
-0055                  00350 led_gpio_table:
-0055   01E2           00351  addwf PCL,F
-0056   0899           00352  dt GREEN_GPIO + (RED_GREEN_TRIS<<4)
-0057   089B           00353  dt RED_GPIO + (RED_GREEN_TRIS<<4)
-0058   08AA           00354  dt YELLOW_GPIO + (YELLOW_BLUE_TRIS<<4)
-0059   08A9           00355  dt BLUE_GPIO + (YELLOW_BLUE_TRIS<<4)
-                      00356  
-                      00357 ; TRIS value for each led
-                      00358 ;led_tris_table: 
-                      00359 ; addwf PCL,F
-                      00360 ; dt RED_GREEN_TRIS
-                      00361 ; dt RED_GREEN_TRIS
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  8
+004D   0891           00309  dt B'10010001' ; 16c5
+004E   0870           00310  dt B'01110000' ; 8b
+004F   0890           00311  dt B'10010000' ; 16b
+0050   086E           00312  dt B'01101110' ; 8a
+0051   088E           00313  dt B'10001110' ; 16a
+0052   084B           00314  dt B'01001011' ; 4g
+0053   0876           00315  dt B'01110110' ; 8f5
+0054   0815           00316  dt B'00010101' ; 1e5
+                      00317 
+                      00318 
+                      00319 
+                      00320 ; GPIO and TRIS values for each led
+0055                  00321 led_gpio_table:
+0055   01E2           00322  addwf PCL,F
+0056   0899           00323  dt GREEN_GPIO + (RED_GREEN_TRIS<<4)
+0057   089B           00324  dt RED_GPIO + (RED_GREEN_TRIS<<4)
+0058   08AA           00325  dt YELLOW_GPIO + (YELLOW_BLUE_TRIS<<4)
+0059   08A9           00326  dt BLUE_GPIO + (YELLOW_BLUE_TRIS<<4)
+                      00327  
+                      00328 ;;;;;;;  led_on  ;;;;;;;
+                      00329 ;; light LED  
+                      00330 ;; input: 
+                      00331 ;;   variable 'led' 
+                      00332 ;;   value is an index in led_gpio_table
+                      00333 ;;;;;;;;;;;;;;;;;;;;;;;; 
+005A                  00334 led_on:
+005A   02??           00335  movfw led
+005B   09??           00336  call led_gpio_table
+005C   0026           00337  movwf GPIO
+005D   0021           00338  movwf TMR0 ; use TMR0 as temporary storage
+005E   0381           00339  swapf TMR0,W
+005F   0006           00340  tris GPIO
+0060   0800           00341  return
+                      00342 
+                      00343 
+                      00344 ;;;;;;;;;;;;;;;;;  read_buttons ;;;;;;;;;;;
+                      00345 ;; read GP3 
+                      00346 ;; when GP3 == 1
+                      00347 ;; compare  cap_cnt with threshold values to identify button
+                      00348 ;; WORKING:
+                      00349 ;;   first the clamp is released on 'C3'
+                      00350 ;;   Capacitor start charging toward Vdd.
+                      00351 ;;   Then variable 'cap_cnt' is incremented
+                      00352 ;;   until GP3 read as '1'.
+                      00353 ;;   The final value of 'cap_cnt' determine
+                      00354 ;;   if a button is down and which one. 
+                      00355 ;; output:
+                      00356 ;;  btn_down variable
+                      00357 ;;  Carry bit: 0 button down, 1 no button down 
+                      00358 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+0061                  00359 read_buttons:
+0061   00??           00360   clrf btn_down
+0062   00??           00361   clrf cap_cnt
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00362 ; dt YELLOW_BLUE_TRIS
-                      00363 ; dt YELLOW_BLUE_TRIS
-                      00364 
-                      00365 ;;;;;;;  led_on  ;;;;;;;
-                      00366 ;; light LED  
-                      00367 ;; input: 
-                      00368 ;;   variable 'led' 
-                      00369 ;;   is LED identifier
-                      00370 ;;;;;;;;;;;;;;;;;;;;;;;; 
-005A                  00371 led_on:
-005A   02??           00372  movfw led
-005B   09??           00373  call led_gpio_table
-005C   0026           00374  movwf GPIO
-005D   0021           00375  movwf TMR0 ; use TMR0 as temporary storage
-005E   0381           00376  swapf TMR0,W
-005F   0006           00377  tris GPIO
-0060   0800           00378  return
-                      00379 
-                      00380 
-                      00381 ;;;;;;;;;;;;;;;;;  read_buttons ;;;;;;;;;;;
-                      00382 ;; read GP3 
-                      00383 ;; when GP3 == 1
-                      00384 ;; check  cap_cnt to identify button
-                      00385 ;; WORKING:
-                      00386 ;;   first the clamp is released on 'C3'
-                      00387 ;;   charging capacitor.
-                      00388 ;;   then variable 'cap_cnt' is incremented
-                      00389 ;;   until GP3 read as '1'.
-                      00390 ;;   The final value of 'cap_cnt' determine
-                      00391 ;;   if a button is down and which one. 
-                      00392 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-0061                  00393 read_buttons:
-0061   00??           00394   clrf btn_down
-0062   00??           00395   clrf cap_cnt
-                      00396   clamp_off ; capacitor start charging.
+                      00362   clamp_off ; capacitor start charging.
 0063   0446               M  bcf CLAMP
-0064                  00397 rbtn1: ; charging counter loop
-0064   0666           00398   btfsc GPIO, GP3
-0065   0A??           00399   goto rbtn3
-0066   02??           00400   incf cap_cnt,F
-0067   0C64           00401   movlw TC_MAX  ; charging timout
-0068   00??           00402   subwf cap_cnt, W
-0069   0703           00403   skpc
-006A   0A??           00404   goto rbtn1
-006B   0C04           00405   movlw BTN_NONE ; charging time too long,
-006C   00??           00406   movwf btn_down ; assume no button down.
-                      00407   clamp_on
-006D   0546               M  bsf CLAMP
-006E   0800           00408   return
-006F                  00409 rbtn3 ; check cap_cnt value to identify button
-                      00410   clamp_on ; keep 'C3' discharge when not reading.
-006F   0546               M  bsf CLAMP
-0070   0C14           00411   movlw GRN_CNT
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE  9
+0064                  00363 rbtn1: ; charging time loop
+0064   0666           00364   btfsc GPIO, GP3
+0065   0A??           00365   goto rbtn3
+0066   03??           00366   incfsz cap_cnt,F
+0067   0A??           00367   goto rbtn1
+0068   0C04           00368   movlw BTN_NONE ; charging time too long,
+0069   00??           00369   movwf btn_down ; assume no button down.
+006A   0503           00370   setc ; carry set at exit means no button down
+006B   0A??           00371   goto rb_exit
+006C                  00372 rbtn3: ; check cap_cnt value to identify button
+006C   0C20           00373   movlw GRN_CNT
+006D   00??           00374   subwf cap_cnt, W
+006E   0703           00375   skpc
+006F   0A??           00376   goto rb_exit  ; BTN_GREEN
+0070   02??           00377   incf btn_down,F
+0071   0C40           00378   movlw RED_CNT
+0072   00??           00379   subwf cap_cnt, W
+0073   0703           00380   skpc
+0074   0A??           00381   goto rb_exit ; BTN_RED
+0075   02??           00382   incf btn_down,F
+0076   0C60           00383   movlw YEL_CNT
+0077   00??           00384   subwf cap_cnt, W
+0078   0703           00385   skpc
+0079   0A??           00386   goto rb_exit ; BTN_YELLOW
+007A   02??           00387   incf btn_down,F ; BTN_BLUE
+007B   0C80           00388   movlw BLUE_CNT
+007C   00??           00389   subwf cap_cnt,W
+007D   0603           00390   skpnc
+007E   02??           00391   incf btn_down,f ; BTN_NONE
+007F                  00392 rb_exit:
+                      00393   clamp_on
+007F   0546               M  bsf CLAMP
+0080   0800           00394   return 
+                      00395 
+                      00396 ;;;;;; store_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00397 ;;; store note in tune_array
+                      00398 ;;; inputs:
+                      00399 ;;;     t0= array index where to store note {0-31}
+                      00400 ;;;     t1=note  {0-3} stored as 2 bits value.
+                      00401 ;;; This one is a little tricky because each byte is split in 4 slots of
+                      00402 ;;; 2 bits. The position in tune_array is index/4 and the slot is the remainder.  
+                      00403 ;;; So there is 4 notes per byte. The note must be stored in the good slot without
+                      00404 ;;; altering the contain of others slots.
+                      00405 ;;;  bits:  76|54|32|10  
+                      00406 ;;;  slots: s3|s2|s1|s0  
+                      00407 ;;; To get that result a AND mask is create to reset the slot to 0 and the OR
+                      00408 ;;; operation is used to insert the note in the slot.  
+                      00409 ;;; exemple: say the index is 5 and the note is 1. then
+                      00410 ;;; byte order is 6/4=1
+                      00411 ;;; slot is 6 % 4 = 2
+                      00412 ;;;  AND mask is 0b11001111
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0071   00??           00412   subwf cap_cnt, W
-0072   0703           00413   skpc
-0073   0800           00414   return  ; BTN_GREEN
-0074   02??           00415   incf btn_down,F
-0075   0C28           00416   movlw RED_CNT
-0076   00??           00417   subwf cap_cnt, W
-0077   0703           00418   skpc
-0078   0800           00419   return ; BTN_RED
-0079   02??           00420   incf btn_down,F
-007A   0C3C           00421   movlw YEL_CNT
-007B   00??           00422   subwf cap_cnt, W
-007C   0703           00423   skpc
-007D   0800           00424   return ; BTN_YELLOW
-007E   02??           00425   incf btn_down,F ; BTN_BLUE
-007F   0C50           00426   movlw BLUE_CNT
-0080   00??           00427   subwf cap_cnt,W
-0081   0603           00428   skpnc
-0082   02??           00429   incf btn_down,f ; BTN_NONE
-0083   0800           00430   return 
-                      00431 
-                      00432 ;;;;;; store_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00433 ;;; store note in tune_array
-                      00434 ;;; inputs:
-                      00435 ;;;     t0= array index where to store note {0-31}
-                      00436 ;;;     t1=note  {0-3} stored as 2 bits value.
-                      00437 ;;; This one is a little tricky because each byte is split in 4 slots of
-                      00438 ;;; 2 bits. The position in tune_array is index/4 and the slot is the remainder.  
-                      00439 ;;; So there is 4 notes per byte. The note must be stored in the good slot without
-                      00440 ;;; altering the contain of others slots.
-                      00441 ;;;  bits:  76|54|32|10  
-                      00442 ;;;  slots: s3|s2|s1|s0  
-                      00443 ;;; To get that result a AND mask is create to reset the slot to 0 and the OR
-                      00444 ;;; operation is used to insert the note in the slot.  
-                      00445 ;;; exemple: say the index is 6 and the note is 1. then
-                      00446 ;;; byte order is 6/4=1
-                      00447 ;;; slot is 6 % 4 = 2
-                      00448 ;;;  AND mask is 0b11001111
-                      00449 ;;                   ^^ slot 2 will be set to 0 after AND operation     
-                      00450 ;;;  OR mask is 0b00010000 
-                      00451 ;;;                 ^^  slot 2 will be set to 1 after OR operation
-                      00452 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-0084                  00453 store_note:
-                      00454 ;initialize array pointer    
-0084   0C??           00455  movlw tune_array
-0085   0024           00456  movwf FSR
-                      00457 ; extract the byte order and put in t2 
-0086   0CFC           00458  movlw 0xFC
-0087   01??           00459  andwf t0,W  ; mask out 2 least significant bits 
-0088   00??           00460  movwf t2 ; and put the value in t2
-                      00461 ; divide by 4
-0089   0403           00462  bcf STATUS, C  
-008A   03??           00463  rrf t2,F
-008B   03??           00464  rrf t2,F
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 10
+                      00413 ;;                   ^^ slot 2 will be set to 0 after AND operation     
+                      00414 ;;;  OR mask is  0b00010000 
+                      00415 ;;;                  ^^  slot 2 will be set to 1 after OR operation
+                      00416 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+0081                  00417 store_note:
+                      00418 ;initialize array pointer    
+0081   0C??           00419  movlw tune_array
+0082   0024           00420  movwf FSR
+                      00421 ; FSR += index/4 
+                      00422 ; clrc ; not needed because FSR is only 5 bits
+0083   03??           00423  rrf t0,W
+0084   00??           00424  movwf t2
+                      00425 ; clrc  ; not need because FSR is only 5 bits
+0085   03??           00426  rrf t2,W
+0086   01E4           00427  addwf FSR,F ; now FSR point to byte in tune_array
+                      00428 ; create AND mask and rotate note in right slot
+0087   0CFC           00429  movlw 0xFC
+0088   00??           00430  movwf t2 ; t2=AND mask
+0089   0C03           00431  movlw 3
+008A   01??           00432  andwf t1,F ; t1=note (ensure all bits are 0 except bits 0,1)
+008B   01??           00433  andwf t0,F   ; t0 = slot number (index % 4 )
+008C   0643           00434  skpnz
+008D   0A??           00435  goto store_note02 ; no need to rotate
+008E                  00436 store_note01: 
+                      00437 ;; rotate left mask 1 slot 
+008E   0503           00438  bsf STATUS,C
+008F   03??           00439  rlf t2,F
+0090   03??           00440  rlf t2,F
+                      00441 ;; rotate left note 1 slot 
+0091   0403           00442  clrc 
+0092   03??           00443  rlf t1,F
+0093   03??           00444  rlf t1,F
+0094   02??           00445  decfsz t0,F
+0095   0A??           00446  goto store_note01
+0096                  00447 store_note02:
+                      00448 ; the shifting is done, store note in slot. 
+0096   02??           00449  movfw t2     ; apply AND mask
+0097   0160           00450  andwf INDF,F ; to reset that slot to 0
+0098   02??           00451  movfw t1     ; W=note
+0099   0120           00452  iorwf INDF,F ; insert note in slot
+009A   0800           00453  return
+                      00454 
+                      00455 ;;;;;;  load_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00456 ;;; get note from tune_array and put it in W 
+                      00457 ;;; input: W is array index  {0-31}
+                      00458 ;;; output: t1 note {0-3}
+                      00459 ;;; byte_order is index/4
+                      00460 ;;; slot is index % 4
+                      00461 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+009B                  00462 load_note:
+009B   00??           00463  movwf t0 ; save index
+                      00464 ; set array pointer
+009C   0C??           00465  movlw tune_array
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 10
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-008C   02??           00465  movfw t2
-008D   01E4           00466  addwf FSR, F ; FSR=tune_array+index/4
-                      00467 ; create AND mask and shift note is right slot
-008E   0C03           00468  movlw 3
-008F   01??           00469  andwf t1,F ; all bits to 0 except bits 0,1
-0090   00??           00470  movwf t2   ; 3->t2
-0091   01??           00471  andwf t0,W   ; get slot number
-0092   00??           00472  subwf t2,F   ; how many times to shift left.
-                      00473 ;create the AND mask
-0093   0CFC           00474  movlw 0xFC
-0094   00??           00475  movwf t0
-0095                  00476 store_note1:
-                      00477 ; shift left AND mask and note value
-                      00478 ; while shift counter not zero. 
-                      00479  brnz shift_left_slot
-0095   0743               M  skpz
-0096   0A??               M  goto shift_left_slot
-                      00480 ; the shifting is done, store note in slot. 
-0097   02??           00481  movfw t0  ; AND mask
-0098   0160           00482  andwf INDF,F ; reset that slot to 0
-0099   02??           00483  movfw t1 ; note to W
-009A   0120           00484  iorwf INDF,F ; insert note in slot
-009B   0800           00485  return
-009C                  00486 shift_left_slot: 
-                      00487 ;; shift left mask 1 slot 
-009C   0403           00488  bcf STATUS, C
-009D   03??           00489  rlf t1,F
-009E   03??           00490  rlf t1,F
-                      00491 ;; shift left note 1 slot 
-009F   0503           00492  bsf STATUS,C 
-00A0   03??           00493  rlf t0,F
-00A1   03??           00494  rlf t0,F
-00A2   00??           00495  decf t2,F
-00A3   0A??           00496  goto store_note1
-                      00497 
-                      00498 ;;;;;;  load_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00499 ;;; get note from tune_array and put it in W 
-                      00500 ;;; input: W is array index  {0-31}
-                      00501 ;;; output: t1 note {0-3}
-                      00502 ;;; byte_order is index/4
-                      00503 ;;; slot is index % 4
-                      00504 ;;; AND mask is inverse of that store_note
-                      00505 ;;; because to read a slot we want to keep the
-                      00506 ;;; contain of the slot and zero all other bits.
-                      00507 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-00A4                  00508 load_note:
-00A4   00??           00509  movwf t0 ; save index
-                      00510 ; set array pointer
-00A5   0C??           00511  movlw tune_array
-00A6   0024           00512  movwf FSR
-00A7   0CFC           00513  movlw 0xFC
-00A8   01??           00514  andwf t0,W
-00A9   00??           00515  movwf t1
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 11
+009D   0024           00466  movwf FSR
+                      00467 ; ignore carry because FSR is only 5 bits 
+009E   03??           00468  rrf t0,W
+009F   00??           00469  movwf t1
+00A0   03??           00470  rrf t1,W
+00A1   01E4           00471  addwf FSR,F ; FSR=tune_array+index/4
+00A2   0200           00472  movfw INDF   ; get the byte containing the note slot
+00A3   00??           00473  movwf t1 ; save it in t1
+00A4   0C03           00474  movlw 3
+00A5   01??           00475  andwf t0,F ; get slot
+00A6   0643           00476  skpnz
+00A7   0A??           00477  goto load_note02
+                      00478 ; slot shifted right 1 position 
+00A8                  00479 rotate_1slot_right:
+00A8   03??           00480  rrf t1,F
+00A9   03??           00481  rrf t1,F
+00AA   02??           00482  decfsz t0,F
+00AB   0A??           00483  goto rotate_1slot_right
+00AC                  00484 load_note02:
+00AC   01??           00485  andwf t1,F
+00AD   0800           00486  return
+                      00487 
+                      00488 ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00489 ;; pseudo random number generator
+                      00490 ;; 24 bits linear feedback shift register 
+                      00491 ;; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
+                      00492 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+00AE                  00493 random:  
+00AE   0403           00494   clrc
+00AF   03??           00495   rrf randU,F
+00B0   03??           00496   rrf randH,F
+00B1   03??           00497   rrf rand,F
+00B2   0703           00498   skpc
+00B3   0800           00499   return
+00B4   0CE1           00500   movlw 0xE1
+00B5   01??           00501   xorwf randU, F
+00B6   0800           00502   return
+                      00503 
+                      00504 ;;;;;;;;;; wait_btn_release  ;;;;;
+                      00505 ;; repeatedly read buttons until 
+                      00506 ;; until it return BTN_NONE
+                      00507 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
+00B7                  00508 wait_btn_release:
+00B7   09??           00509  call read_buttons
+00B8   0703           00510  skpc
+00B9   0A??           00511  goto wait_btn_release
+00BA   0800           00512  return
+                      00513 
+                      00514 
+                      00515 ;;;;;;;;;;;;; note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00516 ; play a musical note from tempered scale. 
+                      00517 ; input:
+                      00518 ;  w = note : encoding  bits 0-4 notes, note 0x1F=pause , bits 5-7 duration
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 11
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00516 ; divide index by 4 
-00AA   0403           00517  bcf STATUS,C
-00AB   03??           00518  rrf t1,F
-00AC   03??           00519  rrf t1,W
-00AD   01E4           00520  addwf FSR,F  ; FSR=tune_array+index/4
-00AE   0200           00521  movfw INDF   ; get the byte containing the note slot
-00AF   00??           00522  movwf t1 ; save it in t1
-00B0   0C03           00523  movlw 3
-00B1   00??           00524  movwf t2 ; the AND mask 
-00B2   01??           00525  andwf t0,W ; slot number index % 4 same as 2 least significant bits.
-00B3   00??           00526  subwf t2,F ; how many times t1 mus be shifted right to put the slot in bits 1:0
-00B4                  00527 load_note1:
-                      00528 ; first shift right until the slot is in bits 1:0
-                      00529  brnz rotate_right_twice
-00B4   0743               M  skpz
-00B5   0A??               M  goto rotate_right_twice
-                      00530 ; shifting done keep bits 1:0
-                      00531 ; and mask all other to zero.
-00B6   0C03           00532  movlw 3
-00B7   01??           00533  andwf t1,F  ; W=note
-00B8   0800           00534  return
-                      00535 ; slot shifted right 1 position 
-00B9                  00536 rotate_right_twice:
-00B9   03??           00537  rrf t1,F
-00BA   03??           00538  rrf t1,F
-00BB   00??           00539  decf t2,F
-00BC   0A??           00540  goto load_note1
-                      00541 
-                      00542 
-                      00543 ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00544 ;; pseudo random number generator
-                      00545 ;; 24 bits linear feedback shift register 
-                      00546 ;; REF: http://en.wikipedia.org/wiki/Linear_feedback_shift_register
-                      00547 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-00BD                  00548 random:  
-00BD   0403           00549   clrc
-00BE   03??           00550   rrf randU,F
-00BF   03??           00551   rrf randH,F
-00C0   03??           00552   rrf rand,F
-00C1   0703           00553   skpc
-00C2   0800           00554   return
-00C3   0CE1           00555   movlw 0xE1
-00C4   01??           00556   xorwf randU, F
-00C5   0800           00557   return
-                      00558 
-                      00559 ;;;;;;;;;;   wait_btn_release  ;;;;;
-                      00560 ;; repeatedly read buttons until 
-                      00561 ;; until it return BTN_NONE
-                      00562 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-00C6                  00563 wait_btn_release:
-00C6   09??           00564  call read_buttons
-                      00565  skpeq btn_down, BTN_NONE
-00C7   0C04               M   movlw 4
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 12
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
-00C8   01??               M   xorwf btn_down, W
-00C9   0743               M   skpz
-00CA   0A??           00566  goto wait_btn_release
-00CB   0800           00567  return
-                      00568 
-                      00569 
-                      00570 ;;;;;;;;;;;;; note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00571 ; play a musical note from tempered scale. 
-                      00572 ; input:
-                      00573 ;  w = note : encoding  bits 0-4 notes, note 0x1F=pause , bits 5-7 timelapse
-                      00574 ; WORKING:
-                      00575 ;  This subroutine is cycle counted.
-                      00576 ;  Tones period are based on Tcy=1uSec
-                      00577 ;  Each path in half-cycle loop is 10 Tcy.
-                      00578 ;  Frequencies values are computed based on this 10 Tcy.
-                      00579 ;  Any change on this code will alter the frequencies. 
-                      00580 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-00CC                  00581 note:
-00CC   00??           00582  movwf t0
-00CD   0C1F           00583  movlw 0x1F
-00CE   01??           00584  andwf t0,W
-00CF   0F1F           00585  xorlw 0x1F
-                      00586  brz pause
-00D0   0643               M  skpnz
-00D1   0A??               M  goto pause
-                      00587  loadr16 delay, 0x0D40
+                      00519 ; WORKING:
+                      00520 ;  This subroutine is cycle counted.
+                      00521 ;  Tones period are based on Tcy=1uSec
+                      00522 ;  Each path in half-cycle loop is 10 Tcy.
+                      00523 ;  Frequencies values are computed based on this 10 Tcy.
+                      00524 ;  Any change on this code will alter the frequencies. 
+                      00525 ;  timeout and delay form a 24 bits counter -> timeout:delayH:delay 
+                      00526 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+00BB                  00527 note:
+00BB   00??           00528  movwf t0
+                      00529  ; if note=0x1F it is a pause
+00BC   0E1F           00530  andlw 0x1F
+00BD   0F1F           00531  xorlw 0x1F
+00BE   0643           00532  skpnz
+00BF   0A??           00533  goto pause
+                      00534 ; maximum duration (whole note)=0x30d40 ~2 seconds 
+                      00535  loadr16 delay, 0x0D40
   0000                    M  local h,l
   0000000D                M  h=high 0x0D40
   00000040                M  l=low 0x0D40
                           M  if l==0
                           M    clrf delay
                           M  else
-00D2   0C40               M    movlw low 0x0D40
-00D3   00??               M    movwf delay
+00C0   0C40               M    movlw low 0x0D40
+00C1   00??               M    movwf delay
                           M  endif
                           M  if h==0
                           M    clrf delay+1
                           M  else
-00D4   0C0D               M    movlw h
-00D5   00??               M    movwf delay+1
+00C2   0C0D               M    movlw h
+00C3   00??               M    movwf delay+1
                           M  endif
-00D6   0C03           00588  movlw 3
-00D7   00??           00589  movwf timeout
-00D8   0CE0           00590  movlw 0xE0
-00D9   01??           00591  andwf t0,W
-00DA   00??           00592  movwf t1
-00DB   03??           00593  swapf t1,F
-00DC   03??           00594  rrf t1,F
-00DD   02??           00595  movf t1,F
-                      00596  brz note02
-00DE   0643               M  skpnz
-00DF   0A??               M  goto note02
-00E0                  00597 note01:
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 13
+00C4   0C03           00536  movlw 3
+00C5   00??           00537  movwf timeout
+00C6   03??           00538  swapf t0,W
+00C7   00??           00539  movwf t1
+00C8   03??           00540  rrf t1,F
+00C9   0C07           00541  movlw 0x7
+00CA   01??           00542  andwf t1,F
+00CB   0643           00543  skpnz
+00CC   0A??           00544  goto note02
+                      00545 ; divide duration counter by 2 for each count in t1
+                      00546 ; to get note duration 
+00CD                  00547 note01:
+00CD   0403           00548  clrc
+00CE   03??           00549  rrf timeout
+00CF   03??           00550  rrf delayH,F
+00D0   03??           00551  rrf delay,F
+00D1   02??           00552  decfsz t1
+00D2   0A??           00553  goto note01
+00D3                  00554 note02:
+00D3   0C1F           00555  movlw 0x1F
+00D4   01??           00556  andwf t0,W ; note index in table
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 12
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00E0   0403           00598  bcf STATUS,C
-00E1   03??           00599  rrf timeout
-00E2   03??           00600  rrf delay+1,F
-00E3   03??           00601  rrf delay,F
-00E4   02??           00602  decfsz t1
-00E5   0A??           00603  goto note01
-00E6                  00604 note02:
-00E6   0C1F           00605  movlw 0x1F
-00E7   01??           00606  andwf t0,W
-00E8   09??           00607  call note_table
-00E9   00??           00608  movwf half_period
-00EA                  00609 note1:
-00EA   0C04           00610  movlw B'0100'
-00EB   01A6           00611  xorwf GPIO, F  ; toggle output pin
-00EC   02??           00612  movfw half_period
-00ED   00??           00613  movwf t0
-00EE                  00614 note2:
-00EE   00??           00615  decf delay,F
-00EF   02??           00616  comf delay,W
-00F0   0743           00617  skpz
-00F1   0A??           00618  goto note3
-00F2   00??           00619  decf delay+1,F
-00F3   02??           00620  comf delay+1,W
-00F4   0743           00621  skpz
-00F5   0A??           00622  goto note4  ; to get 10 Tcy in this path must goto note4
-00F6   00??           00623  decf timeout,F
-00F7   02??           00624  comf timeout,W
-00F8   0643           00625  skpnz
-00F9   0A??           00626  goto note5
-00FA                  00627 note3:
-00FA   0A??           00628  goto $+1
-00FB                  00629 note4:
-00FB   02??           00630  decfsz t0
-00FC   0A??           00631  goto note2  ; half-cycle loop
-00FD   0A??           00632  goto note1 ; half-cycle completed
-00FE                  00633 note5:
-                      00634  clamp_on
-00FE   0546               M  bsf CLAMP
-00FF   0800           00635  return
-                      00636 
-                      00637 ;;;;; musical pause ;;;;;;;;;;;;;;
-                      00638 ;; when note value is 0x1F
-                      00639 ;; tone subroutine branch here.
-                      00640 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-0100                  00641 pause: ;musical pause
-                      00642  loadr16 delay, 2000
+00D5   09??           00557  call note_table
+00D6   00??           00558  movwf half_period
+                      00559 ; tone generation loop
+                      00560 ; WARNING: cycle counted 
+                      00561 ; values in note_table depends on 
+                      00562 ; the number of cycles in this loop 
+00D7                  00563 note1: ; half-period loop
+00D7   0C04           00564  movlw B'0100'  ; 
+00D8   01A6           00565  xorwf GPIO, F  ; toggle output pin
+00D9   02??           00566  movfw half_period ; 
+00DA   00??           00567  movwf t0 ; 
+00DB   0C01           00568  movlw 1  ; ovherhead 5 TCY
+00DC                  00569 note2: ; duration loop
+00DC   00??           00570  subwf delay,F ; 1 TCY
+00DD   0703           00571  skpc  ; 2|3 TCY
+00DE   00??           00572  subwf delayH,F ; 3 TCY 
+00DF   0703           00573  skpc ; 4|5 TCY
+00E0   00??           00574  subwf timeout,F ; 5 TCY
+00E1   0703           00575  skpc ; 6|7 TCY
+00E2   0A??           00576  goto note5
+00E3   02??           00577  decfsz t0 ; 8|9 TCY
+00E4   0A??           00578  goto note2  ; 10 TCY half-cycle loop
+00E5   0A??           00579  goto note1 ; 16 TCY complete half-cycle
+00E6                  00580 note5:
+                      00581  clamp_on
+00E6   0546               M  bsf CLAMP
+00E7   0800           00582  return
+                      00583 
+                      00584 ;;;;; musical pause ;;;;;;;;;;;;;;
+                      00585 ;; when note value is 0x1F
+                      00586 ;; tone subroutine branch here.
+                      00587 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+00E8                  00588 pause: ;musical pause
+                      00589  loadr16 delay, 2000
   0000                    M  local h,l
   00000007                M  h=high 2000
   000000D0                M  l=low 2000
                           M  if l==0
                           M    clrf delay
                           M  else
-0100   0CD0               M    movlw low 2000
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 14
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
-0101   00??               M    movwf delay
+00E8   0CD0               M    movlw low 2000
+00E9   00??               M    movwf delay
                           M  endif
                           M  if h==0
                           M    clrf delay+1
                           M  else
-0102   0C07               M    movlw h
-0103   00??               M    movwf delay+1
+00EA   0C07               M    movlw h
+00EB   00??               M    movwf delay+1
                           M  endif
-0104   03??           00643  swapf t0,F
-0105   03??           00644  rrf t0,F
-0106   0C07           00645  movlw 0x7
-0107   01??           00646  andwf t0,F
-0108   0643           00647  skpnz
-0109   0A??           00648  goto pause01
-010A                  00649 pause00: 
-010A   0403           00650  clrc
-010B   03??           00651  rrf delay+1,F
-010C   03??           00652  rrf delay,F
-010D   02??           00653  decfsz t0,F
-010E   0A??           00654  goto pause00
-010F                  00655 pause01: 
-010F   09??           00656  call delay_ms
-0110   0800           00657  return
-                      00658 
-                      00659 
-                      00660     
-                      00661 ;;;;;;;;;;;;;;;  INITIALIZATION CODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00662  ; hardware initialization
-0111                  00663 init:
-0111   0C41           00664  movlw OPTION_MASK
-0112   0002           00665  option 
-                      00666  led_off
-0113   0C0B               M  movlw B'1011'
-0114   0006               M  tris GPIO
-0115   00??           00667  clrf notes_cnt
-0116   0CA5           00668  movlw 0xA5
-0117   00??           00669  movwf rand
-                      00670  clamp_on
-0118   0546               M  bsf CLAMP
-                      00671 
-                      00672 ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
-                      00673 ; the biggest share of the code is here
-                      00674 ; because subroutine calls are limited to 2 levels
-                      00675 ; It use a lot of goto instead of call.
-                      00676 ; I like to factor code in many subroutines that neast each others
-                      00677 ; but this is not possible with this MCU.
-                      00678 ; Here is spaghetti code for your degustation (or disgustation), MCU obliged. 
-                      00679 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-0119                  00680 main:
-                      00681 ;;;;;;;;;;;;;;;;;;;;;;;;
-                      00682 ;; power on self test
-                      00683 ;; light each LED in sequence
-                      00684 ;; with associated tone.
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 15
+00EC   03??           00590  swapf t0,F
+00ED   03??           00591  rrf t0,F
+00EE   0C07           00592  movlw 0x7
+00EF   01??           00593  andwf t0,F
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 13
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00685 ;;;;;;;;;;;;;;;;;;;;;;;; 
-0119   00??           00686  clrf led
-011A                  00687 post:
-011A   09??           00688  call led_on
-011B   02??           00689  movfw led
-011C   09??           00690  call translate_table
-011D   09??           00691  call note
-011E   02??           00692  incf led,F
-011F   0740           00693  btfss led, 2
-0120   0A??           00694  goto post
-                      00695  led_off
-0121   0C0B               M  movlw B'1011'
-0122   0006               M  tris GPIO
-0123   09??           00696  call wait_btn_release
-0124                  00697 next_set:
-0124   00??           00698  clrf led
-0125   0C86           00699  movlw .134
-0126   00??           00700  movwf timeout
-                      00701 ; wait for a button down to start game
-                      00702 ; light LEDs in sequence
-                      00703 ;until a button is pressed down or timeout occur 
-0127                  00704 led_sweep:
-0127   02??           00705  decfsz timeout,F
-0128   0A??           00706  goto keep_going
-0129   0A??           00707  goto init  ; after about 35 seconds of idle time, reset.
-012A                  00708 keep_going: 
-012A   09??           00709  call led_on
-                      00710  loadr16 delay, .250
-  0000                    M  local h,l
-  00000000                M  h=high .250
-  000000FA                M  l=low .250
-                          M  if l==0
-                          M    clrf delay
-                          M  else
-012B   0CFA               M    movlw low .250
-012C   00??               M    movwf delay
-                          M  endif
-                          M  if h==0
-012D   00??               M    clrf delay+1
-                          M  else
-                          M    movlw h
-                          M    movwf delay+1
-                          M  endif
-012E   09??           00711  call delay_ms
-012F   02??           00712  incf led,F
-0130   0C03           00713  movlw 3
-0131   01??           00714  andwf led,F
-0132   09??           00715  call read_buttons
-                      00716  skpneq btn_down, BTN_NONE
-0133   0C04               M  movlw 4
-0134   01??               M  xorwf btn_down, W
-0135   0643               M  skpnz
-0136   0A??           00717  goto led_sweep
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 16
+00F0   0643           00594  skpnz
+00F1   0A??           00595  goto pause01
+                      00596 ; divide delay by 2 for each count in t0 
+00F2                  00597 pause00: 
+00F2   0403           00598  clrc
+00F3   03??           00599  rrf delayH,F
+00F4   03??           00600  rrf delay,F
+00F5   02??           00601  decfsz t0,F
+00F6   0A??           00602  goto pause00
+00F7                  00603 pause01: 
+00F7   09??           00604  call delay_ms
+00F8   0800           00605  return
+                      00606 
+                      00607 
+                      00608     
+                      00609 ;;;;;;;;;;;;;;;  INITIALIZATION CODE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00610  ; hardware initialization
+00F9                  00611 init:
+00F9   0C41           00612  movlw OPTION_MASK
+00FA   0002           00613  option 
+                      00614  led_off
+00FB   0C0B               M  movlw B'1011'
+00FC   0006               M  tris GPIO
+00FD   00??           00615  clrf notes_cnt
+00FE   0CA5           00616  movlw 0xA5
+00FF   00??           00617  movwf rand
+                      00618  clamp_on
+0100   0546               M  bsf CLAMP
+                      00619 
+                      00620 ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
+                      00621 ; The largest chunk of the code is here
+                      00622 ; because subroutine calls are limited to 2 levels
+                      00623 ; it use a lot of goto instead of call.
+                      00624 ; I like to factor code in many subroutines that neast each others
+                      00625 ; but this is not possible with this MCU.
+                      00626 ; Here is spaghetti code for your degustation (or disgustation), MCU obliged. 
+                      00627 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+0101                  00628 main:
+                      00629 ;;;;;;;;;;;;;;;;;;;;;;;;
+                      00630 ;; power on self test
+                      00631 ;; light each LED in sequence
+                      00632 ;; with associated tone.
+                      00633 ;;;;;;;;;;;;;;;;;;;;;;;; 
+0101   00??           00634  clrf led
+0102   00??           00635  clrf timeout
+0103                  00636 post:
+0103   02??           00637  incf timeout,F
+0104   09??           00638  call led_on
+0105   02??           00639  movfw led
+0106   09??           00640  call translate_table ; get note binded to that LED
+0107   09??           00641  call note
+0108   02??           00642  incf led,F
+0109   0740           00643  btfss led, 2
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 14
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00718  led_off
-0137   0C0B               M  movlw B'1011'
-0138   0006               M  tris GPIO
-0139   02??           00719  movfw timeout
-013A   00??           00720  movwf rand
-013B   09??           00721  call wait_btn_release
-                      00722  loadr16 delay, .500
+010A   0A??           00644  goto post
+                      00645  led_off
+010B   0C0B               M  movlw B'1011'
+010C   0006               M  tris GPIO
+010D   09??           00646  call read_buttons
+010E   0603           00647  skpnc
+010F   0A??           00648  goto main
+0110   02??           00649  movfw timeout
+0111   00??           00650  movwf rand
+0112   09??           00651  call wait_btn_release
+                      00652 ;next_set:
+                      00653 ; clrf led
+                      00654 ; movlw .134
+                      00655 ; movwf timeout
+                      00656 ;; wait for a button down to start game
+                      00657 ;; light LEDs in sequence
+                      00658 ;; until a button is pressed down or timeout occur 
+                      00659 ;led_sweep:
+                      00660 ; decfsz timeout,F
+                      00661 ; goto keep_going
+                      00662 ; goto init  ; after about 35 seconds of idle time, reset.
+                      00663 ;keep_going: 
+                      00664 ; call led_on
+                      00665 ; loadr16 delay, .250
+                      00666 ; call delay_ms
+                      00667 ; incf led,F
+                      00668 ; movlw 3
+                      00669 ; andwf led,F
+                      00670 ; call read_buttons
+                      00671 ; skpnc
+                      00672 ; goto led_sweep
+                      00673 ; led_off
+                      00674 ; movfw timeout
+                      00675 ; movwf rand
+                      00676 ; call wait_btn_release
+                      00677  loadr16 delay, .500
   0000                    M  local h,l
   00000001                M  h=high .500
   000000F4                M  l=low .500
                           M  if l==0
                           M    clrf delay
                           M  else
-013C   0CF4               M    movlw low .500
-013D   00??               M    movwf delay
+0113   0CF4               M    movlw low .500
+0114   00??               M    movwf delay
                           M  endif
                           M  if h==0
                           M    clrf delay+1
                           M  else
-013E   0C01               M    movlw h
-013F   00??               M    movwf delay+1
+0115   0C01               M    movlw h
+0116   00??               M    movwf delay+1
                           M  endif
-0140   09??           00723  call delay_ms
-                      00724 ; game loop.
-0141                  00725 play_rand:
-0141   02??           00726  movfw notes_cnt
-0142   00??           00727  movwf t0
-0143   02??           00728  incf notes_cnt,F
-                      00729 ; add a random value to sequence 
-0144   09??           00730  call random
-0145   02??           00731  movfw randU
-0146   01??           00732  xorwf randH,W
-0147   01??           00733  xorwf rand,W
-0148   0E03           00734  andlw 3
-0149   00??           00735  movwf t1
-014A   09??           00736  call store_note
-014B   00??           00737  clrf t3 ; notes counter
-                      00738 ; play sequence loop 
-014C                  00739 play_rand02:
-014C   02??           00740  movfw t3
-014D   09??           00741  call load_note
-014E   02??           00742  movfw t1
-014F   00??           00743  movwf led
-0150   09??           00744  call led_on
-0151   02??           00745  movfw led
-0152   09??           00746  call translate_table
-0153   09??           00747  call note
-                      00748  led_off
-0154   0C0B               M  movlw B'1011'
-0155   0006               M  tris GPIO
-                      00749  loadr16 delay, .100
-  0000                    M  local h,l
-  00000000                M  h=high .100
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 17
+0117   09??           00678  call delay_ms
+                      00679 ; game loop.
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 15
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
+0118                  00680 play_rand:
+0118   02??           00681  movfw notes_cnt
+0119   00??           00682  movwf t0
+011A   02??           00683  incf notes_cnt,F
+                      00684 ; add a random value to sequence 
+011B   09??           00685  call random
+011C   02??           00686  movfw randU
+011D   01??           00687  xorwf randH,W
+011E   01??           00688  xorwf rand,W
+011F   0E03           00689  andlw 3
+0120   00??           00690  movwf t1
+0121   09??           00691  call store_note
+0122   00??           00692  clrf t3 ; notes counter
+                      00693 ; play sequence loop 
+0123                  00694 play_rand02:
+0123   02??           00695  movfw t3
+0124   09??           00696  call load_note
+0125   02??           00697  movfw t1
+0126   00??           00698  movwf led
+0127   09??           00699  call led_on
+0128   02??           00700  movfw led
+0129   09??           00701  call translate_table
+012A   09??           00702  call note
+                      00703  led_off
+012B   0C0B               M  movlw B'1011'
+012C   0006               M  tris GPIO
+                      00704  loadr16 delay, .100
+  0000                    M  local h,l
+  00000000                M  h=high .100
   00000064                M  l=low .100
                           M  if l==0
                           M    clrf delay
                           M  else
-0156   0C64               M    movlw low .100
-0157   00??               M    movwf delay
+012D   0C64               M    movlw low .100
+012E   00??               M    movwf delay
                           M  endif
                           M  if h==0
-0158   00??               M    clrf delay+1
+012F   00??               M    clrf delay+1
                           M  else
                           M    movlw h
                           M    movwf delay+1
                           M  endif
-0159   09??           00750  call delay_ms ; 1/10 second pause
-015A   02??           00751  incf t3,F
-015B   02??           00752  movfw notes_cnt
-015C   00??           00753  subwf t3,W
-015D   0743           00754  skpz
-015E   0A??           00755  goto play_rand02
-                      00756 ; wait player playing sequence back
-015F                  00757 wait_playback:
-015F   00??           00758  clrf t3 ; notes counter
-0160                  00759 wait01:
-0160   0CFA           00760  movlw .250   ; maximun delay between each button 250 msec.
-0161   00??           00761  movwf timeout
-0162                  00762 wait02: ; wait button loop
-                      00763  loadr16 delay, .20
+0130   09??           00705  call delay_ms ; 1/10 second pause
+0131   02??           00706  incf t3,F
+0132   02??           00707  movfw notes_cnt
+0133   00??           00708  subwf t3,W
+0134   0743           00709  skpz
+0135   0A??           00710  goto play_rand02
+                      00711 ; wait player playing sequence back
+0136                  00712 wait_playback:
+0136   00??           00713  clrf t3 ; notes counter
+0137                  00714 wait01:
+0137   0CFA           00715  movlw .250   ; maximun delay between each button 250 msec.
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0138   00??           00716  movwf timeout
+0139                  00717 wait02: ; wait button loop
+                      00718  loadr16 delay, .20
   0000                    M  local h,l
   00000000                M  h=high .20
   00000014                M  l=low .20
                           M  if l==0
                           M    clrf delay
                           M  else
-0162   0C14               M    movlw low .20
-0163   00??               M    movwf delay
+0139   0C14               M    movlw low .20
+013A   00??               M    movwf delay
                           M  endif
                           M  if h==0
-0164   00??               M    clrf delay+1
+013B   00??               M    clrf delay+1
                           M  else
                           M    movlw h
                           M    movwf delay+1
                           M  endif
-0165   09??           00764  call delay_ms
-0166   02??           00765  movfw timeout
-0167   00??           00766  movwf rand
-0168   00??           00767  decf timeout,F
-0169   0643           00768  skpnz
-016A   0A??           00769  goto game_over
-016B   09??           00770  call read_buttons
-                      00771  skpneq btn_down, BTN_NONE
-016C   0C04               M  movlw 4
-016D   01??               M  xorwf btn_down, W
-016E   0643               M  skpnz
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 18
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
-016F   0A??           00772  goto wait02
-                      00773  loadr16 delay, .10  ; wait 10 msec before buttons
+013C   09??           00719  call delay_ms
+013D   02??           00720  movfw timeout
+013E   00??           00721  movwf rand
+013F   00??           00722  decf timeout,F
+0140   0643           00723  skpnz
+0141   0A??           00724  goto game_over
+0142   09??           00725  call read_buttons
+0143   0603           00726  skpnc 
+0144   0A??           00727  goto wait02
+                      00728  loadr16 delay, .10  ; wait 10 msec before buttons
   0000                    M  local h,l
   00000000                M  h=high .10
   0000000A                M  l=low .10
                           M  if l==0
                           M    clrf delay
                           M  else
-0170   0C0A               M    movlw low .10
-0171   00??               M    movwf delay
+0145   0C0A               M    movlw low .10
+0146   00??               M    movwf delay
                           M  endif
                           M  if h==0
-0172   00??               M    clrf delay+1
+0147   00??               M    clrf delay+1
                           M  else
                           M    movlw h
                           M    movwf delay+1
                           M  endif
-0173   09??           00774  call delay_ms       ; debouncing
-0174   09??           00775  call read_buttons
-                      00776  skpneq btn_down, BTN_NONE
-0175   0C04               M  movlw 4
-0176   01??               M  xorwf btn_down, W
-0177   0643               M  skpnz
-0178   0A??           00777  goto wait01 ; no button down
-                      00778 ; light LED and play tone corresponding to that button
-0179   02??           00779  movfw btn_down
-017A   00??           00780  movwf led
-017B   09??           00781  call led_on
-017C   02??           00782  movfw led
-017D   09??           00783  call translate_table
-017E   09??           00784  call note
-                      00785  led_off
-017F   0C0B               M  movlw B'1011'
-0180   0006               M  tris GPIO
-0181   09??           00786  call wait_btn_release
-0182   02??           00787  movfw t3
-0183   09??           00788  call load_note
-0184   02??           00789  movfw led
-0185   00??           00790  subwf t1
-0186   0743           00791  skpz
-0187   0A??           00792  goto game_over ; not the good one
-0188   02??           00793  incf t3,F
-0189   02??           00794  movfw notes_cnt
-018A   00??           00795  subwf t3,W
-018B   0743           00796  skpz
-018C   0A??           00797  goto wait01 ; loop to wait for next button
-018D                  00798 playback_success
-                      00799 ; to understand this 'switch' and 'case'
-                      00800 ; machanism see macros above. 
-                      00801  switch notes_cnt
-018D   02??               M  movfw notes_cnt
-                      00802  case .6, victory
-018E   0F06               M  xorlw .6
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 19
+0148   09??           00729  call delay_ms       ; debouncing
+0149   09??           00730  call read_buttons
+014A   0603           00731  skpnc
+014B   0A??           00732  goto wait01 ; no button down
+                      00733 ; light LED and play tone corresponding to that button
+014C   02??           00734  movfw btn_down
+014D   00??           00735  movwf led
+014E   09??           00736  call led_on
+014F   02??           00737  movfw led
+0150   09??           00738  call translate_table
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 17
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                          M  brz victory
-018F   0643               M  skpnz
-0190   0A??               M  goto victory
-0191   0F06               M  xorlw .6 ; reset W for next case
-                      00803  case .12, victory
-0192   0F0C               M  xorlw .12
-                          M  brz victory
-0193   0643               M  skpnz
-0194   0A??               M  goto victory
-0195   0F0C               M  xorlw .12 ; reset W for next case
-                      00804  case .18, victory
-0196   0F12               M  xorlw .18
-                          M  brz victory
-0197   0643               M  skpnz
-0198   0A??               M  goto victory
-0199   0F12               M  xorlw .18 ; reset W for next case
-                      00805  case .24, victory
-019A   0F18               M  xorlw .24
-                          M  brz victory
-019B   0643               M  skpnz
-019C   0A??               M  goto victory
-019D   0F18               M  xorlw .24 ; reset W for next case
-                      00806  case .32, victory_final
-019E   0F20               M  xorlw .32
-                          M  brz victory_final
-019F   0643               M  skpnz
-01A0   0A??               M  goto victory_final
-01A1   0F20               M  xorlw .32 ; reset W for next case
-                      00807  loadr16 delay, .500
+0151   09??           00739  call note
+                      00740  led_off
+0152   0C0B               M  movlw B'1011'
+0153   0006               M  tris GPIO
+0154   09??           00741  call wait_btn_release
+0155   02??           00742  movfw t3
+0156   09??           00743  call load_note
+0157   02??           00744  movfw led
+0158   00??           00745  subwf t1
+0159   0743           00746  skpz
+015A   0A??           00747  goto game_over ; not the good one
+015B   02??           00748  incf t3,F
+015C   02??           00749  movfw notes_cnt
+015D   00??           00750  subwf t3,W
+015E   0743           00751  skpz
+015F   0A??           00752  goto wait01 ; loop to wait for next button
+0160                  00753 playback_success
+                      00754 ; to understand this 'switch' and 'case'
+                      00755 ; machanism see macros above. 
+                      00756  switch notes_cnt
+0160   02??               M  movfw notes_cnt
+                      00757  case .6, victory
+0161   0F06               M  xorlw .6
+0162   0643               M  skpnz
+0163   0A??               M  goto victory
+0164   0F06               M  xorlw .6 ; reset W for next case
+                      00758  case .12, victory
+0165   0F0C               M  xorlw .12
+0166   0643               M  skpnz
+0167   0A??               M  goto victory
+0168   0F0C               M  xorlw .12 ; reset W for next case
+                      00759  case .18, victory
+0169   0F12               M  xorlw .18
+016A   0643               M  skpnz
+016B   0A??               M  goto victory
+016C   0F12               M  xorlw .18 ; reset W for next case
+                      00760  case .24, victory
+016D   0F18               M  xorlw .24
+016E   0643               M  skpnz
+016F   0A??               M  goto victory
+0170   0F18               M  xorlw .24 ; reset W for next case
+                      00761  case .32, victory_final
+0171   0F20               M  xorlw .32
+0172   0643               M  skpnz
+0173   0A??               M  goto victory_final
+0174   0F20               M  xorlw .32 ; reset W for next case
+                      00762  loadr16 delay, .500
   0000                    M  local h,l
   00000001                M  h=high .500
   000000F4                M  l=low .500
                           M  if l==0
                           M    clrf delay
                           M  else
-01A2   0CF4               M    movlw low .500
-01A3   00??               M    movwf delay
-                          M  endif
-                          M  if h==0
-                          M    clrf delay+1
-                          M  else
-01A4   0C01               M    movlw h
-01A5   00??               M    movwf delay+1
-                          M  endif
-                      00808 ; this the default case 
-01A6   09??           00809  call delay_ms
-01A7   0A??           00810  goto play_rand
-                      00811 ; play rocky_theme at 6,12,18,24 and 32 length success.
-                      00812 ; more notes of the theme are played at each milestone.
-                      00813 ; If player get at maximum sequence length (i.e. 32)
-                      00814 ; the theme is played to end. 
-01A8                  00815 victory:
-01A8   02??           00816  movfw notes_cnt
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 20
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 18
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-01A9   0A??           00817  goto play_victory_theme
-                      00818 ; play complete rocky theme.
-01AA                  00819 victory_final:
-01AA   00??           00820  clrf notes_cnt
-01AB   0C28           00821  movlw .40
-01AC                  00822 play_victory_theme:
-01AC   00??           00823  movwf t2
-01AD   00??           00824  clrf t3
-01AE                  00825 prt01:
-01AE   02??           00826  movfw t3
-01AF   09??           00827  call rocky_theme
-01B0   09??           00828  call note
-01B1   02??           00829  incf t3,F
-01B2   02??           00830  movfw t2
-01B3   00??           00831  subwf t3,W
-01B4   0743           00832  skpz
-01B5   0A??           00833  goto prt01
-                      00834  loadr16 delay, 0x400
+0175   0CF4               M    movlw low .500
+0176   00??               M    movwf delay
+                          M  endif
+                          M  if h==0
+                          M    clrf delay+1
+                          M  else
+0177   0C01               M    movlw h
+0178   00??               M    movwf delay+1
+                          M  endif
+                      00763 ; this the default case 
+0179   09??           00764  call delay_ms
+017A   0A??           00765  goto play_rand
+                      00766 ; play rocky_theme at 6,12,18,24 and 32 length success.
+                      00767 ; more notes of the theme are played at each milestone.
+                      00768 ; If player get at maximum sequence length (i.e. 32)
+                      00769 ; the theme is played to end. 
+017B                  00770 victory:
+017B   02??           00771  movfw notes_cnt
+017C   0A??           00772  goto play_victory_theme
+                      00773 ; play complete rocky theme.
+017D                  00774 victory_final:
+017D   00??           00775  clrf notes_cnt
+017E   0C28           00776  movlw .40
+017F                  00777 play_victory_theme:
+017F   00??           00778  movwf t2
+0180   00??           00779  clrf t3
+0181                  00780 prt01:
+0181   02??           00781  movfw t3
+0182   09??           00782  call rocky_theme
+0183   09??           00783  call note
+0184   02??           00784  incf t3,F
+0185   02??           00785  movfw t2
+0186   00??           00786  subwf t3,W
+0187   0743           00787  skpz
+0188   0A??           00788  goto prt01
+                      00789  loadr16 delay, 0x400
   0000                    M  local h,l
   00000004                M  h=high 0x400
   00000000                M  l=low 0x400
                           M  if l==0
-01B6   00??               M    clrf delay
+0189   00??               M    clrf delay
                           M  else
                           M    movlw low 0x400
                           M    movwf delay
@@ -1155,139 +1055,145 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                           M  if h==0
                           M    clrf delay+1
                           M  else
-01B7   0C04               M    movlw h
-01B8   00??               M    movwf delay+1
+018A   0C04               M    movlw h
+018B   00??               M    movwf delay+1
                           M  endif
-01B9   09??           00835  call delay_ms
-01BA   0C20           00836  movlw 32
-01BB   01??           00837  xorwf notes_cnt,W
-01BC   0743           00838  skpz
-01BD   0A??           00839  goto play_rand
-01BE   0A??           00840  goto init
-                      00841  
-                      00842 ; player failed to repeat sequence
-01BF                  00843 game_over:
-01BF   0C38           00844  movlw B'00111000'
-01C0   09??           00845  call note ; audio alert game over
-                      00846 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      00847 ;; display sequence length
-                      00848 ;; BLUE is 25
-                      00849 ;; YELLOW is 10
-                      00850 ;; RED is 5
-                      00851 ;; GREEN is 1
-                      00852 ;; length=NB*25+NY*10+NR*5+NG
-                      00853 ;; where Nx is number of blink of
-                      00854 ;; each LED.
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 21
+018C   09??           00790  call delay_ms
+018D   0C20           00791  movlw 32
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 19
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00855 ;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-                      00856 #define len notes_cnt
-01C1   00??           00857  decf len,F
-01C2                  00858 display_length:
-01C2   02??           00859  movf len,F
-01C3   0643           00860  skpnz
-01C4   0A??           00861  goto wait1sec
-01C5   0C03           00862  movlw 3
-01C6   00??           00863  movwf led
-01C7   0C19           00864  movlw .25
-01C8   00??           00865  subwf len,W
-01C9   0703           00866  skpc
-01CA   0A??           00867  goto lt25 ; <25
-01CB   00??           00868  movwf len
-01CC   0A??           00869  goto blink_led
-01CD                  00870 lt25:
-01CD   00??           00871  decf led,F
-01CE   0C0A           00872  movlw .10
-01CF   00??           00873  subwf len,W
-01D0   0703           00874  skpc
-01D1   0A??           00875  goto lt10; <10
-01D2   00??           00876  movwf len
-01D3   0A??           00877  goto blink_led
-01D4                  00878 lt10:
-01D4   00??           00879  decf led,F
-01D5   0C05           00880  movlw .5
-01D6   00??           00881  subwf len,W
-01D7   0703           00882  skpc
-01D8   0A??           00883  goto lt5 ; <5
-01D9   00??           00884  movwf len
-01DA   0A??           00885  goto blink_led
-01DB                  00886 lt5:
-01DB   00??           00887  decf led,F
-01DC   00??           00888  decf len,F
-01DD                  00889 blink_led:
-01DD   09??           00890  call led_on
-                      00891  loadr16 delay, .500
+018E   01??           00792  xorwf notes_cnt,W
+018F   0743           00793  skpz
+0190   0A??           00794  goto play_rand
+0191   0A??           00795  goto init
+                      00796  
+                      00797 ; player failed to repeat sequence
+0192                  00798 game_over:
+0192   0C38           00799  movlw B'00111000'
+0193   09??           00800  call note ; audio alert game over
+                      00801 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      00802 ;; display sequence length
+                      00803 ;; BLUE is 25
+                      00804 ;; YELLOW is 10
+                      00805 ;; RED is 5
+                      00806 ;; GREEN is 1
+                      00807 ;; length=NB*25+NY*10+NR*5+NG
+                      00808 ;; where Nx is number of blink of
+                      00809 ;; each LED.
+                      00810 ;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+                      00811 #define len notes_cnt
+0194   00??           00812  decf len,F
+0195                  00813 display_length:
+0195   02??           00814  movf len,F
+0196   0643           00815  skpnz
+0197   0A??           00816  goto wait1sec
+0198   0C03           00817  movlw 3
+0199   00??           00818  movwf led
+019A   0C19           00819  movlw .25
+019B   00??           00820  subwf len,W
+019C   0703           00821  skpc
+019D   0A??           00822  goto lt25 ; <25
+019E   00??           00823  movwf len
+019F   0A??           00824  goto blink_led
+01A0                  00825 lt25:
+01A0   00??           00826  decf led,F
+01A1   0C0A           00827  movlw .10
+01A2   00??           00828  subwf len,W
+01A3   0703           00829  skpc
+01A4   0A??           00830  goto lt10; <10
+01A5   00??           00831  movwf len
+01A6   0A??           00832  goto blink_led
+01A7                  00833 lt10:
+01A7   00??           00834  decf led,F
+01A8   0C05           00835  movlw .5
+01A9   00??           00836  subwf len,W
+01AA   0703           00837  skpc
+01AB   0A??           00838  goto lt5 ; <5
+01AC   00??           00839  movwf len
+01AD   0A??           00840  goto blink_led
+01AE                  00841 lt5:
+01AE   00??           00842  decf led,F
+01AF   00??           00843  decf len,F
+01B0                  00844 blink_led:
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01B0   09??           00845  call led_on
+                      00846  loadr16 delay, .500
   0000                    M  local h,l
   00000001                M  h=high .500
   000000F4                M  l=low .500
                           M  if l==0
                           M    clrf delay
                           M  else
-01DE   0CF4               M    movlw low .500
-01DF   00??               M    movwf delay
+01B1   0CF4               M    movlw low .500
+01B2   00??               M    movwf delay
                           M  endif
                           M  if h==0
                           M    clrf delay+1
                           M  else
-01E0   0C01               M    movlw h
-01E1   00??               M    movwf delay+1
+01B3   0C01               M    movlw h
+01B4   00??               M    movwf delay+1
                           M  endif
-01E2   09??           00892  call delay_ms ; 500 msec pause
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 22
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
-                      00893  led_off
-01E3   0C0B               M  movlw B'1011'
-01E4   0006               M  tris GPIO
-                      00894  loadr16 delay, .500
+01B5   09??           00847  call delay_ms ; 500 msec pause
+                      00848  led_off
+01B6   0C0B               M  movlw B'1011'
+01B7   0006               M  tris GPIO
+                      00849  loadr16 delay, .500
   0000                    M  local h,l
   00000001                M  h=high .500
   000000F4                M  l=low .500
                           M  if l==0
                           M    clrf delay
                           M  else
-01E5   0CF4               M    movlw low .500
-01E6   00??               M    movwf delay
+01B8   0CF4               M    movlw low .500
+01B9   00??               M    movwf delay
                           M  endif
                           M  if h==0
                           M    clrf delay+1
                           M  else
-01E7   0C01               M    movlw h
-01E8   00??               M    movwf delay+1
+01BA   0C01               M    movlw h
+01BB   00??               M    movwf delay+1
                           M  endif
-01E9   09??           00895  call delay_ms ; 500 msec pause
-01EA   0A??           00896  goto display_length
-                      00897 ;wait 1 second before resuming
-                      00898 ;to next_set 
-01EB                  00899 wait1sec:
-                      00900  loadr16 delay, .1000
+01BC   09??           00850  call delay_ms ; 500 msec pause
+01BD   0A??           00851  goto display_length
+                      00852 ;wait 1 second before resuming
+                      00853 ;to next_set 
+01BE                  00854 wait1sec:
+                      00855  loadr16 delay, .1000
   0000                    M  local h,l
   00000003                M  h=high .1000
   000000E8                M  l=low .1000
                           M  if l==0
                           M    clrf delay
                           M  else
-01EB   0CE8               M    movlw low .1000
-01EC   00??               M    movwf delay
+01BE   0CE8               M    movlw low .1000
+01BF   00??               M    movwf delay
                           M  endif
                           M  if h==0
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
                           M    clrf delay+1
                           M  else
-01ED   0C03               M    movlw h
-01EE   00??               M    movwf delay+1
+01C0   0C03               M    movlw h
+01C1   00??               M    movwf delay+1
                           M  endif
-01EF   09??           00901  call delay_ms
-01F0   0A??           00902  goto next_set
-                      00903  
-0FEB                  00904  end
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 23
+01C2   09??           00856  call delay_ms
+01C3   0A??           00857  goto main ;next_set
+                      00858  
+0FEB                  00859  end
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 22
 
 
 SYMBOL TABLE
@@ -1325,7 +1231,7 @@ GPWUF                             00000007
 GREEN                             0
 GREEN_GPIO                        B'1001'
 GREEN_NOTE                        B'01000000'
-GRN_CNT                           20
+GRN_CNT                           32
 HALF                              B'00111111'
 HEIGHT                            B'01111111'
 INDF                              00000000
@@ -1346,7 +1252,7 @@ RED_CNT                           2*GRN_CNT
 RED_GPIO                          B'1011'
 RED_GREEN_TRIS                    B'1001'
 RED_NOTE                          B'01000101'
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 24
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 23
 
 
 SYMBOL TABLE
@@ -1372,7 +1278,6 @@ YELLOW_NOTE                       B'01001001'
 YEL_CNT                           3*GRN_CNT
 Z                                 00000002
 _.org_0_0005                      00000005
-_.org_0_00FA                      000000FA
 _CONFIG                           00000FFF
 _CP_OFF                           00000FFF
 _CP_ON                            00000FF7
@@ -1389,11 +1294,7 @@ _WDTE_ON                          00000FFF
 _WDT_OFF                          00000FFB
 _WDT_ON                           00000FFF
 __10F202                          00000001
-blink_led                         000001DD
-brc                               
-brnc                              
-brnz                              
-brz                               
+blink_led                         000001B0
 btn_down                          00000000
 cap_cnt                           00000007
 case                              
@@ -1402,74 +1303,62 @@ clamp_on
 delay                             00000002
 delayH                            delay+1
 delay_ms                          00000001
-display_length                    000001C2
-game_over                         000001BF
+display_length                    00000195
+game_over                         00000192
 half_period                       00000004
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 25
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
-init                              00000111
-keep_going                        0000012A
+init                              000000F9
 led                               00000001
 led_gpio_table                    00000055
 led_off                           
 led_on                            0000005A
-led_sweep                         00000127
-len                               notes_cnt
-load_note                         000000A4
-load_note1                        000000B4
-loadr16                           
-lt10                              000001D4
-lt25                              000001CD
-lt5                               000001DB
-main                              00000119
-next_set                          00000124
-note                              000000CC
-note01                            000000E0
-note02                            000000E6
-note1                             000000EA
-note2                             000000EE
-note3                             000000FA
-note4                             000000FB
-note5                             000000FE
-note_off                          
-note_on                           
-note_table                        00000012
-notes_cnt                         00000008
-pause                             00000100
-pause00                           0000010A
-pause01                           0000010F
-play_rand                         00000141
-play_rand02                       0000014C
-play_victory_theme                000001AC
-playback_success                  0000018D
-post                              0000011A
-prt01                             000001AE
-rand                              00000009
-randH                             rand+1
-randU                             rand+2
-random                            000000BD
-rbtn1                             00000064
-rbtn3                             0000006F
-read_buttons                      00000061
-rocky_theme                       0000002C
-rotate_right_twice                000000B9
-shift_left_slot                   0000009C
-skpeq                             
-skpneq                            
-store_note                        00000084
-store_note1                       00000095
-switch                            
-t0                                00000014
-MPASM 5.71                   POCKETSIMON.ASM   1-3-2017  23:06:19         PAGE 26
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 24
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+len                               notes_cnt
+load_note                         0000009B
+load_note02                       000000AC
+loadr16                           
+lt10                              000001A7
+lt25                              000001A0
+lt5                               000001AE
+main                              00000101
+note                              000000BB
+note01                            000000CD
+note02                            000000D3
+note1                             000000D7
+note2                             000000DC
+note5                             000000E6
+note_off                          
+note_on                           
+note_table                        00000012
+notes_cnt                         00000008
+pause                             000000E8
+pause00                           000000F2
+pause01                           000000F7
+play_rand                         00000118
+play_rand02                       00000123
+play_victory_theme                0000017F
+playback_success                  00000160
+post                              00000103
+prt01                             00000181
+rand                              00000009
+randH                             rand+1
+randU                             rand+2
+random                            000000AE
+rb_exit                           0000007F
+rbtn1                             00000064
+rbtn3                             0000006C
+read_buttons                      00000061
+rocky_theme                       0000002C
+rotate_1slot_right                000000A8
+store_note                        00000081
+store_note01                      0000008E
+store_note02                      00000096
+switch                            
+t0                                00000014
 t1                                00000015
 t2                                00000016
 t3                                00000017
@@ -1477,16 +1366,22 @@ timeout                           00000005
 timeoutH                          timeout+1
 translate_table                   0000000D
 tune_array                        0000000C
-victory                           000001A8
-victory_final                     000001AA
-wait01                            00000160
-wait02                            00000162
-wait1sec                          000001EB
-wait_btn_release                  000000C6
-wait_playback                     0000015F
+victory                           0000017B
+victory_final                     0000017D
+wait01                            00000137
+wait02                            00000139
+MPASM 5.71                   POCKETSIMON.ASM   1-4-2017  21:32:12         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+wait1sec                          000001BE
+wait_btn_release                  000000B7
+wait_playback                     00000136
 
 Errors   :     0
-Warnings :     0 reported,    51 suppressed
+Warnings :     0 reported,    45 suppressed
 Messages :     0 reported,     4 suppressed
 
 

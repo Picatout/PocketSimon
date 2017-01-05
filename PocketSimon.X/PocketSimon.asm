@@ -123,7 +123,7 @@
 ; GRN_CNT value.
 ; On the contrary if YELLOW LED
 ; turn on decrease GRN_CNT value.			       
-#define GRN_CNT 20
+#define GRN_CNT 32
 #define RED_CNT 2*GRN_CNT
 #define YEL_CNT 3*GRN_CNT
 #define BLUE_CNT 4*GRN_CNT
@@ -145,46 +145,15 @@ note_on macro
  bcf AUDIO
  endm
 
+; keep C3 capacitor discharged 
 clamp_on macro
  bsf CLAMP
  endm
 
+; enable C3 capacitor to charge. 
 clamp_off macro
  bcf CLAMP
  endm
-
-brz macro address  ; branch on zero flag
- skpnz
- goto address
- endm
-
-brnz macro address ; branch on not zero flag
- skpz
- goto address
- endm
-
-brc macro address ; branch on carry flag
- skpnc
- goto address
- endm
-
-brnc macro address ; branch on not carry flag
- skpc
- goto address
- endm
-
-skpeq macro var, val ; skip next instruction if variable == val
-  movlw val
-  xorwf var, W
-  skpz
-  endm
-
-skpneq macro var, val ; skip next instruction if variable!=val
- movlw val
- xorwf var, W
- skpnz
- endm
-
 
 ; switch marco
 switch macro var ; put variable in W for use by following case
@@ -193,7 +162,8 @@ switch macro var ; put variable in W for use by following case
 
 case macro  n, address  ; go to address if W==n
  xorlw n
- brz address
+ skpnz
+ goto address
  xorlw n ; reset W for next case
  endm
 
@@ -264,41 +234,42 @@ delay_ms:
  goto delay_ms
  return
  
-
-translate_table: ;translate button to corresponding note
+;translate button to corresponding note
+translate_table:
  addwf PCL, F
  dt GREEN_NOTE
  dt RED_NOTE
  dt YELLOW_NOTE
  dt BLUE_NOTE
 
-note_table: ; tempered scale
+; tempered scale half-period values 
+note_table: 
  addwf PCL, F
- dt .254  ; G3     blue note (0)
- dt .240  ; G#3
- dt .226  ; A3
- dt .214  ; A#3
- dt .201  ; B3
- dt .190  ; C4     yellow note (5)
- dt .179  ; C#4
- dt .169  ; D4
- dt .160  ; D#4
- dt .151  ; E4     red note (9)
- dt .142  ; F4
- dt .134  ; F#4
- dt .127  ; G4     green note (12)
- dt .119  ; G#4
- dt .113  ; A4
- dt .106  ; A#4
- dt .100  ; B4
- dt .95   ; C5
- dt .89   ; C#5
- dt .84   ; D5
- dt .79   ; D#5
- dt .75   ; E5
- dt .71   ; F5
- dt .67   ; F#5
- dt .63   ; G5
+ dt .254  ; G2     blue note (0)
+ dt .240  ; G#2
+ dt .226  ; A2
+ dt .214  ; A#2
+ dt .201  ; B2
+ dt .190  ; C3     yellow note (5)
+ dt .179  ; C#3
+ dt .169  ; D3
+ dt .160  ; D#3
+ dt .151  ; E3     red note (9)
+ dt .142  ; F3
+ dt .134  ; F#3
+ dt .127  ; G3     green note (12)
+ dt .119  ; G#3
+ dt .113  ; A3
+ dt .106  ; A#3
+ dt .100  ; B3
+ dt .95   ; C4
+ dt .89   ; C#4
+ dt .84   ; D4
+ dt .79   ; D#4
+ dt .75   ; E4
+ dt .71   ; F4
+ dt .67   ; F#4
+ dt .63   ; G4
 
 ; rocky 1 movie theme 
 rocky_theme:
@@ -346,7 +317,7 @@ rocky_theme:
 
 
 
- ; led GPIO value for each led
+; GPIO and TRIS values for each led
 led_gpio_table:
  addwf PCL,F
  dt GREEN_GPIO + (RED_GREEN_TRIS<<4)
@@ -354,19 +325,11 @@ led_gpio_table:
  dt YELLOW_GPIO + (YELLOW_BLUE_TRIS<<4)
  dt BLUE_GPIO + (YELLOW_BLUE_TRIS<<4)
  
-; TRIS value for each led
-;led_tris_table: 
-; addwf PCL,F
-; dt RED_GREEN_TRIS
-; dt RED_GREEN_TRIS
-; dt YELLOW_BLUE_TRIS
-; dt YELLOW_BLUE_TRIS
-
 ;;;;;;;  led_on  ;;;;;;;
 ;; light LED  
 ;; input: 
 ;;   variable 'led' 
-;;   is LED identifier
+;;   value is an index in led_gpio_table
 ;;;;;;;;;;;;;;;;;;;;;;;; 
 led_on:
  movfw led
@@ -381,52 +344,53 @@ led_on:
 ;;;;;;;;;;;;;;;;;  read_buttons ;;;;;;;;;;;
 ;; read GP3 
 ;; when GP3 == 1
-;; check  cap_cnt to identify button
+;; compare  cap_cnt with threshold values to identify button
 ;; WORKING:
 ;;   first the clamp is released on 'C3'
-;;   charging capacitor.
-;;   then variable 'cap_cnt' is incremented
+;;   Capacitor start charging toward Vdd.
+;;   Then variable 'cap_cnt' is incremented
 ;;   until GP3 read as '1'.
 ;;   The final value of 'cap_cnt' determine
 ;;   if a button is down and which one. 
+;; output:
+;;  btn_down variable
+;;  Carry bit: 0 button down, 1 no button down 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 read_buttons:
   clrf btn_down
   clrf cap_cnt
   clamp_off ; capacitor start charging.
-rbtn1: ; charging counter loop
+rbtn1: ; charging time loop
   btfsc GPIO, GP3
   goto rbtn3
-  incf cap_cnt,F
-  movlw TC_MAX  ; charging timout
-  subwf cap_cnt, W
-  skpc
+  incfsz cap_cnt,F
   goto rbtn1
   movlw BTN_NONE ; charging time too long,
   movwf btn_down ; assume no button down.
-  clamp_on
-  return
-rbtn3 ; check cap_cnt value to identify button
-  clamp_on ; keep 'C3' discharge when not reading.
+  setc ; carry set at exit means no button down
+  goto rb_exit
+rbtn3: ; check cap_cnt value to identify button
   movlw GRN_CNT
   subwf cap_cnt, W
   skpc
-  return  ; BTN_GREEN
+  goto rb_exit  ; BTN_GREEN
   incf btn_down,F
   movlw RED_CNT
   subwf cap_cnt, W
   skpc
-  return ; BTN_RED
+  goto rb_exit ; BTN_RED
   incf btn_down,F
   movlw YEL_CNT
   subwf cap_cnt, W
   skpc
-  return ; BTN_YELLOW
+  goto rb_exit ; BTN_YELLOW
   incf btn_down,F ; BTN_BLUE
   movlw BLUE_CNT
   subwf cap_cnt,W
   skpnc
   incf btn_down,f ; BTN_NONE
+rb_exit:
+  clamp_on
   return 
 
 ;;;;;; store_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -442,58 +406,51 @@ rbtn3 ; check cap_cnt value to identify button
 ;;;  slots: s3|s2|s1|s0  
 ;;; To get that result a AND mask is create to reset the slot to 0 and the OR
 ;;; operation is used to insert the note in the slot.  
-;;; exemple: say the index is 6 and the note is 1. then
+;;; exemple: say the index is 5 and the note is 1. then
 ;;; byte order is 6/4=1
 ;;; slot is 6 % 4 = 2
 ;;;  AND mask is 0b11001111
 ;;                   ^^ slot 2 will be set to 0 after AND operation     
-;;;  OR mask is 0b00010000 
-;;;                 ^^  slot 2 will be set to 1 after OR operation
+;;;  OR mask is  0b00010000 
+;;;                  ^^  slot 2 will be set to 1 after OR operation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 store_note:
 ;initialize array pointer    
  movlw tune_array
  movwf FSR
-; extract the byte order and put in t2 
+; FSR += index/4 
+; clrc ; not needed because FSR is only 5 bits
+ rrf t0,W
+ movwf t2
+; clrc  ; not need because FSR is only 5 bits
+ rrf t2,W
+ addwf FSR,F ; now FSR point to byte in tune_array
+; create AND mask and rotate note in right slot
  movlw 0xFC
- andwf t0,W  ; mask out 2 least significant bits 
- movwf t2 ; and put the value in t2
-; divide by 4
- bcf STATUS, C  
- rrf t2,F
- rrf t2,F
- movfw t2
- addwf FSR, F ; FSR=tune_array+index/4
-; create AND mask and shift note is right slot
+ movwf t2 ; t2=AND mask
  movlw 3
- andwf t1,F ; all bits to 0 except bits 0,1
- movwf t2   ; 3->t2
- andwf t0,W   ; get slot number
- subwf t2,F   ; how many times to shift left.
-;create the AND mask
- movlw 0xFC
- movwf t0
-store_note1:
-; shift left AND mask and note value
-; while shift counter not zero. 
- brnz shift_left_slot
+ andwf t1,F ; t1=note (ensure all bits are 0 except bits 0,1)
+ andwf t0,F   ; t0 = slot number (index % 4 )
+ skpnz
+ goto store_note02 ; no need to rotate
+store_note01: 
+;; rotate left mask 1 slot 
+ bsf STATUS,C
+ rlf t2,F
+ rlf t2,F
+;; rotate left note 1 slot 
+ clrc 
+ rlf t1,F
+ rlf t1,F
+ decfsz t0,F
+ goto store_note01
+store_note02:
 ; the shifting is done, store note in slot. 
- movfw t0  ; AND mask
- andwf INDF,F ; reset that slot to 0
- movfw t1 ; note to W
+ movfw t2     ; apply AND mask
+ andwf INDF,F ; to reset that slot to 0
+ movfw t1     ; W=note
  iorwf INDF,F ; insert note in slot
  return
-shift_left_slot: 
-;; shift left mask 1 slot 
- bcf STATUS, C
- rlf t1,F
- rlf t1,F
-;; shift left note 1 slot 
- bsf STATUS,C 
- rlf t0,F
- rlf t0,F
- decf t2,F
- goto store_note1
 
 ;;;;;;  load_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; get note from tune_array and put it in W 
@@ -501,44 +458,32 @@ shift_left_slot:
 ;;; output: t1 note {0-3}
 ;;; byte_order is index/4
 ;;; slot is index % 4
-;;; AND mask is inverse of that store_note
-;;; because to read a slot we want to keep the
-;;; contain of the slot and zero all other bits.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 load_note:
  movwf t0 ; save index
 ; set array pointer
  movlw tune_array
  movwf FSR
- movlw 0xFC
- andwf t0,W
+; ignore carry because FSR is only 5 bits 
+ rrf t0,W
  movwf t1
-; divide index by 4 
- bcf STATUS,C
- rrf t1,F
  rrf t1,W
- addwf FSR,F  ; FSR=tune_array+index/4
+ addwf FSR,F ; FSR=tune_array+index/4
  movfw INDF   ; get the byte containing the note slot
  movwf t1 ; save it in t1
  movlw 3
- movwf t2 ; the AND mask 
- andwf t0,W ; slot number index % 4 same as 2 least significant bits.
- subwf t2,F ; how many times t1 mus be shifted right to put the slot in bits 1:0
-load_note1:
-; first shift right until the slot is in bits 1:0
- brnz rotate_right_twice
-; shifting done keep bits 1:0
-; and mask all other to zero.
- movlw 3
- andwf t1,F  ; W=note
- return
+ andwf t0,F ; get slot
+ skpnz
+ goto load_note02
 ; slot shifted right 1 position 
-rotate_right_twice:
+rotate_1slot_right:
  rrf t1,F
  rrf t1,F
- decf t2,F
- goto load_note1
-
+ decfsz t0,F
+ goto rotate_1slot_right
+load_note02:
+ andwf t1,F
+ return
 
 ;;;;;;;;;  random  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; pseudo random number generator
@@ -556,13 +501,13 @@ random:
   xorwf randU, F
   return
 
-;;;;;;;;;;   wait_btn_release  ;;;;;
+;;;;;;;;;; wait_btn_release  ;;;;;
 ;; repeatedly read buttons until 
 ;; until it return BTN_NONE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 wait_btn_release:
  call read_buttons
- skpeq btn_down, BTN_NONE
+ skpc
  goto wait_btn_release
  return
 
@@ -570,66 +515,68 @@ wait_btn_release:
 ;;;;;;;;;;;;; note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; play a musical note from tempered scale. 
 ; input:
-;  w = note : encoding  bits 0-4 notes, note 0x1F=pause , bits 5-7 timelapse
+;  w = note : encoding  bits 0-4 notes, note 0x1F=pause , bits 5-7 duration
 ; WORKING:
 ;  This subroutine is cycle counted.
 ;  Tones period are based on Tcy=1uSec
 ;  Each path in half-cycle loop is 10 Tcy.
 ;  Frequencies values are computed based on this 10 Tcy.
 ;  Any change on this code will alter the frequencies. 
+;  timeout and delay form a 24 bits counter -> timeout:delayH:delay 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 note:
  movwf t0
- movlw 0x1F
- andwf t0,W
+ ; if note=0x1F it is a pause
+ andlw 0x1F
  xorlw 0x1F
- brz pause
+ skpnz
+ goto pause
+; maximum duration (whole note)=0x30d40 ~2 seconds 
  loadr16 delay, 0x0D40
  movlw 3
  movwf timeout
- movlw 0xE0
- andwf t0,W
+ swapf t0,W
  movwf t1
- swapf t1,F
  rrf t1,F
- movf t1,F
- brz note02
+ movlw 0x7
+ andwf t1,F
+ skpnz
+ goto note02
+; divide duration counter by 2 for each count in t1
+; to get note duration 
 note01:
- bcf STATUS,C
+ clrc
  rrf timeout
- rrf delay+1,F
+ rrf delayH,F
  rrf delay,F
  decfsz t1
  goto note01
 note02:
  movlw 0x1F
- andwf t0,W
+ andwf t0,W ; note index in table
  call note_table
  movwf half_period
-note1:
- movlw B'0100'
+; tone generation loop
+; WARNING: cycle counted 
+; values in note_table depends on 
+; the number of cycles in this loop 
+note1: ; half-period loop
+ movlw B'0100'  ; 
  xorwf GPIO, F  ; toggle output pin
- movfw half_period
- movwf t0
-note2:
- decf delay,F
- comf delay,W
- skpz
- goto note3
- decf delay+1,F
- comf delay+1,W
- skpz
- goto note4  ; to get 10 Tcy in this path must goto note4
- decf timeout,F
- comf timeout,W
- skpnz
+ movfw half_period ; 
+ movwf t0 ; 
+ movlw 1  ; ovherhead 5 TCY
+note2: ; duration loop
+ subwf delay,F ; 1 TCY
+ skpc  ; 2|3 TCY
+ subwf delayH,F ; 3 TCY 
+ skpc ; 4|5 TCY
+ subwf timeout,F ; 5 TCY
+ skpc ; 6|7 TCY
  goto note5
-note3:
- goto $+1
-note4:
- decfsz t0
- goto note2  ; half-cycle loop
- goto note1 ; half-cycle completed
+ decfsz t0 ; 8|9 TCY
+ goto note2  ; 10 TCY half-cycle loop
+ goto note1 ; 16 TCY complete half-cycle
 note5:
  clamp_on
  return
@@ -646,9 +593,10 @@ pause: ;musical pause
  andwf t0,F
  skpnz
  goto pause01
+; divide delay by 2 for each count in t0 
 pause00: 
  clrc
- rrf delay+1,F
+ rrf delayH,F
  rrf delay,F
  decfsz t0,F
  goto pause00
@@ -670,9 +618,9 @@ init:
  clamp_on
 
 ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
-; the biggest share of the code is here
+; The largest chunk of the code is here
 ; because subroutine calls are limited to 2 levels
-; It use a lot of goto instead of call.
+; it use a lot of goto instead of call.
 ; I like to factor code in many subroutines that neast each others
 ; but this is not possible with this MCU.
 ; Here is spaghetti code for your degustation (or disgustation), MCU obliged. 
@@ -684,38 +632,20 @@ main:
 ;; with associated tone.
 ;;;;;;;;;;;;;;;;;;;;;;;; 
  clrf led
+ clrf timeout
 post:
+ incf timeout,F
  call led_on
  movfw led
- call translate_table
+ call translate_table ; get note binded to that LED
  call note
  incf led,F
  btfss led, 2
  goto post
  led_off
- call wait_btn_release
-next_set:
- clrf led
- movlw .134
- movwf timeout
-; wait for a button down to start game
-; light LEDs in sequence
-;until a button is pressed down or timeout occur 
-led_sweep:
- decfsz timeout,F
- goto keep_going
- goto init  ; after about 35 seconds of idle time, reset.
-keep_going: 
- call led_on
- loadr16 delay, .250
- call delay_ms
- incf led,F
- movlw 3
- andwf led,F
  call read_buttons
- skpneq btn_down, BTN_NONE
- goto led_sweep
- led_off
+ skpnc
+ goto main
  movfw timeout
  movwf rand
  call wait_btn_release
@@ -768,12 +698,12 @@ wait02: ; wait button loop
  skpnz
  goto game_over
  call read_buttons
- skpneq btn_down, BTN_NONE
+ skpnc 
  goto wait02
  loadr16 delay, .10  ; wait 10 msec before buttons
  call delay_ms       ; debouncing
  call read_buttons
- skpneq btn_down, BTN_NONE
+ skpnc
  goto wait01 ; no button down
 ; light LED and play tone corresponding to that button
  movfw btn_down
@@ -899,7 +829,7 @@ blink_led:
 wait1sec:
  loadr16 delay, .1000
  call delay_ms
- goto next_set
+ goto main
  
  end
  

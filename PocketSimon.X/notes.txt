@@ -1,6 +1,62 @@
 2017-01-02
 ==========
-begin size optimisation
-removed pause_table and modified pause subroutine, save 7 instructions.
-removed led_tris_table, modified led_gpio_table to include data that was in led_tris_table and modified
-led_on subroutine, saved another 5 instructions.
+Begin size optimization.
+
+* Removed pause_table and modified pause subroutine, save 7 instructions.
+
+* Removed led_tris_table, modified led_gpio_table to include data that was in led_tris_table and modified
+  led_on subroutine, saved 5 instructions.
+
+* read_button subroutine optimization:
+  Use cap_cnt rollover as timeout instead of TC_MAX comparison, saved 3 instructions. 
+  Needed to increment GRN_CNT value from 20 to 32 as charging time loop 
+  dropped from 8 TCY to 5 TCY.
+
+* store_note subroutine optimization:
+  * changed the code to divide index/4, saved 4 instructions. No need to clear carry
+    before rrf because FSR is only 5 bits the contain of bits 7,6 have no effect on
+    addition.
+  * by reversing order of slots in byte and rewriting code saved 2 instructions.
+
+* load_note subroutine optimization:
+  * rewriting code to compute FSR pointer saved 3 instructions.
+  * rewriting rotate code saved another 3 instructions.
+
+* wait_btn_release subroutine optimization:
+  * a rewrite of read_buttons to ensure the carry bit is set at return
+    when no button is down enable to rewrite wait_btn_release to save 2 instructions
+    and save 6 instructions in main routine.
+
+* note subroutine optimization:
+  * At beginning of subroutine replaced 
+      movwf t0
+      movlw 0x1F
+      andwf t0,W
+    by
+      movwf t0
+      andlw 0x1F 
+    as value of t0 is already in W this save 1 instruction.
+  * Replaced this:
+        movlw 0xE0
+        andwf t0,W
+        movwf t1
+        swapf t1,F
+        rrf t1,F
+        movf t1,F
+        skpnz
+    by
+        swapf t0,W
+        movwf t1
+        rrf t1,F
+        movlw 0x7
+        andwf t1,F
+        skpnz
+    saving 1 instruction.
+  * Rewriting tone generation loop saved 5 more instructions.
+
+* main routine optimization
+  * Removed the silent LEDs sweep awhile waiting for start signal. Now
+    loop in POST instead. Saved 15 instructions.
+
+
+    
