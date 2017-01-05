@@ -57,6 +57,12 @@ Begin size optimization.
 * main routine optimization
   * Removed the silent LEDs sweep awhile waiting for start signal. Now
     loop in POST instead. Saved 15 instructions.
-
-
-    
+  * replacing 
+        case 32, victory_final
+    by
+        xorlw 32
+        skpnz
+        goto victory_final
+    sacved 1 instruction.
+  * Reordering somes instructions in init and play_victory saved 1 more instruction.
+  * No more use of timeout to seed rand instead use TMR0 count, saved 1 instruction.

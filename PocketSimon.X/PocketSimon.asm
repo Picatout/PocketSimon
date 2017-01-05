@@ -454,8 +454,10 @@ store_note02:
 
 ;;;;;;  load_note  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; get note from tune_array and put it in W 
-;;; input: W is array index  {0-31}
-;;; output: t1 note {0-3}
+;;; input: 
+;;;	 W is array index  {0-31}
+;;; output: 
+;;;	 t1 note {0-3}
 ;;; byte_order is index/4
 ;;; slot is index % 4
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
@@ -464,7 +466,8 @@ load_note:
 ; set array pointer
  movlw tune_array
  movwf FSR
-; ignore carry because FSR is only 5 bits 
+; ignore carry in rrf because FSR is only 5 bits
+; the addition won't be affected by bits 7:6 of W 
  rrf t0,W
  movwf t1
  rrf t1,W
@@ -612,10 +615,12 @@ init:
  movlw OPTION_MASK
  option 
  led_off
- clrf notes_cnt
  movlw 0xA5
  movwf rand
  clamp_on
+next_set:
+ clrf led
+ clrf notes_cnt
 
 ;;;;;;;;;;;;;;;;;;;;;;;;  MAIN PROCEDURE  ;;;;;;;;;;;;;;;;;;;;;
 ; The largest chunk of the code is here
@@ -630,11 +635,9 @@ main:
 ;; power on self test
 ;; light each LED in sequence
 ;; with associated tone.
+;; wait button down to start game    
 ;;;;;;;;;;;;;;;;;;;;;;;; 
- clrf led
- clrf timeout
 post:
- incf timeout,F
  call led_on
  movfw led
  call translate_table ; get note binded to that LED
@@ -646,10 +649,10 @@ post:
  call read_buttons
  skpnc
  goto post
- movfw timeout
- movwf rand
+ movfw TMR0
+ movwf randH
  call wait_btn_release
- loadr16 delay, .500
+ loadr16 delay, 500
  call delay_ms
 ; game loop.
 play_rand:
@@ -664,8 +667,8 @@ play_rand:
  andlw 3
  movwf t1
  call store_note
- clrf t3 ; notes counter
 ; play sequence loop 
+ clrf t3 ; notes counter
 play_rand02:
  movfw t3
  call load_note
@@ -687,21 +690,21 @@ play_rand02:
 wait_playback:
  clrf t3 ; notes counter
 wait01:
- movlw .250   ; maximun delay between each button 250 msec.
+ movlw 250   ; maximun delay between each button 250 msec.
  movwf timeout
 wait02: ; wait button loop
- loadr16 delay, .20
+ loadr16 delay, 20
  call delay_ms
  movfw timeout
- movwf rand
+; movwf rand
  decf timeout,F
  skpnz
  goto game_over
  call read_buttons
  skpnc 
  goto wait02
- loadr16 delay, .10  ; wait 10 msec before buttons
- call delay_ms       ; debouncing
+ loadr16 delay, 10  ; wait 10 msec for buttons
+ call delay_ms      ; debouncing
  call read_buttons
  skpnc
  goto wait01 ; no button down
@@ -716,8 +719,8 @@ wait02: ; wait button loop
  call wait_btn_release
  movfw t3
  call load_note
- movfw led
- subwf t1
+ movfw t1
+ xorwf led,W
  skpz
  goto game_over ; not the good one
  incf t3,F
@@ -725,30 +728,31 @@ wait02: ; wait button loop
  subwf t3,W
  skpz
  goto wait01 ; loop to wait for next button
-playback_success
+;playback_success
 ; to understand this 'switch' and 'case'
 ; machanism see macros above. 
  switch notes_cnt
- case .6, victory
- case .12, victory
- case .18, victory
- case .24, victory
- case .32, victory_final
- loadr16 delay, .500
-; this the default case 
+ case 6, victory
+ case 12, victory
+ case 18, victory
+ case 24, victory
+ ;case 32, victory_final
+ xorlw 32
+ skpnz
+ goto victory_final
+; this is the default case 
+ loadr16 delay, 500
  call delay_ms
  goto play_rand
 ; play rocky_theme at 6,12,18,24 and 32 length success.
 ; more notes of the theme are played at each milestone.
-; If player get at maximum sequence length (i.e. 32)
+; If player get at maximum sequence length (32)
 ; the theme is played to end. 
+victory_final:
+ movlw 40
+ movwf notes_cnt
 victory:
  movfw notes_cnt
- goto play_victory_theme
-; play complete rocky theme.
-victory_final:
- clrf notes_cnt
- movlw .40
 play_victory_theme:
  movwf t2
  clrf t3
@@ -763,12 +767,11 @@ prt01:
  goto prt01
  loadr16 delay, 0x400
  call delay_ms
- movlw 32
+ movlw 40
  xorwf notes_cnt,W
  skpz
  goto play_rand
- goto init
- 
+ goto next_set
 ; player failed to repeat sequence
 game_over:
  movlw B'00111000'
@@ -818,18 +821,18 @@ lt5:
  decf len,F
 blink_led:
  call led_on
- loadr16 delay, .500
+ loadr16 delay, 500
  call delay_ms ; 500 msec pause
  led_off
- loadr16 delay, .500
+ loadr16 delay, 500
  call delay_ms ; 500 msec pause
  goto display_length
 ;wait 1 second before resuming
 ;to next_set 
 wait1sec:
- loadr16 delay, .1000
+ loadr16 delay, 1000
  call delay_ms
- goto main
+ goto next_set
  
  end
  
