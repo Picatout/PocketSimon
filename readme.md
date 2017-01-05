@@ -113,7 +113,7 @@ But if you got that far you are a real champion and you can listen to the comple
  This source code is in totality in file  **PocketSimon.asm** and is well documented (I think). It use 100% of RAM and 88% of
  program space which is 768 bytes. At first I wrote a working version that used 100% of program memory. Then when that first 
  version was working properly I started **size optimization**. My notes describing the step I followed to reduce code size are
- in file [notes.txt]/pocketsimon.x/notes.txt. This process was concluded by a 12% size reduction, the final version using 450 instructions.
+ in file [notes.txt](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/notes.txt). This process was concluded by a 12% size reduction, the final version using 450 instructions.
  Some tricks used in this process are what I would call **dirty tricks**. Like using **TMR0** special function register as a temporary
  storage because there was no more RAM available. The other **dirty trick** was to rely on the fact that special fonction register
 **FSR** as only 5 bits implemented. In **store_note** and **load_note** subroutines FSR register is setup to point in tune_array. 
