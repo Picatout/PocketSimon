@@ -335,7 +335,7 @@ led_on:
  movfw led
  call led_gpio_table
  movwf GPIO
- movwf TMR0 ; use TMR0 as temporary storage
+ movwf TMR0 ; **DIRTY TRICK** use TMR0 as temporary storage
  swapf TMR0,W
  tris GPIO
  return
@@ -419,6 +419,9 @@ store_note:
  movlw tune_array
  movwf FSR
 ; FSR += index/4 
+; **DIRTY TRICK** commented out 'clrc' before 'rrf' 
+; to save 2 instructions
+; doesn't matter because FSR as only 5 bits 
 ; clrc ; not needed because FSR is only 5 bits
  rrf t0,W
  movwf t2
@@ -436,7 +439,7 @@ store_note:
 store_note01: 
 ;; rotate left mask 1 slot 
  bsf STATUS,C
- rlf t2,F
+ rlf t2,F 
  rlf t2,F
 ;; rotate left note 1 slot 
  clrc 
@@ -466,6 +469,7 @@ load_note:
 ; set array pointer
  movlw tune_array
  movwf FSR
+; **DIRTY TRICK** same as above in 'store_note'
 ; ignore carry in rrf because FSR is only 5 bits
 ; the addition won't be affected by bits 7:6 of W 
  rrf t0,W
