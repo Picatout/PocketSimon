@@ -639,13 +639,13 @@ post:
  movfw led
  call translate_table ; get note binded to that LED
  call note
- incf led,F
- btfss led, 2
- goto post
  led_off
+ incf led,F
+ movlw 3
+ andwf led,F
  call read_buttons
  skpnc
- goto main
+ goto post
  movfw timeout
  movwf rand
  call wait_btn_release
