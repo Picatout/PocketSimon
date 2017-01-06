@@ -117,11 +117,11 @@ But if you got that far you are a real champion and you can listen to the comple
  concluded by a 12% size reduction, the final version using 450 instructions. Some tricks used in this process are what I would call 
  **dirty tricks**. Like using **TMR0** special function register as a temporary variable storage because there was no more RAM 
  available. The other **dirty trick** was to rely on the fact that special fonction register **FSR** as only 5 bits implemented. 
- In **store_note** and **load_note** subroutines FSR register is setup to point in tune_array. For that the array index must be 
- divided by 4 which is done by 2 **rrf** (rotate right file) instructions. Normaly the **clr** instruction should be used before each
+ In **store_note** and **load_note** subroutines FSR register is setup to point in **tune_array**. For that the array index must be 
+ divided by 4 which is done by 2 **rrf** (rotate right file) instructions. Normaly the **clrc** instruction should be used before each
  **rrf** to insure that carry roll in bit 7 as 0. But in this specific situtation we don't have to care about the value 
-of bits 7,6 in W register after division because FSR has only 5 bits when the instruction **addwf FSR,F** the value of bits 7,6 of 
-W registers won't affect the result.
+of bits 7,6 in W register after division because FSR has only 5 bits. When the instruction **addwf FSR,F** add de value of W to FSR 
+the value of bits 7,6 of W registers won't affect the result.
  
 
 ## licence
