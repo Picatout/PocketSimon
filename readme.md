@@ -31,7 +31,7 @@ See licencing at end of this file.
 * pickit 2 or 3 for device programming
   
 ## Schematic  
-![schematic](/KiCAD/schematic.png)
+![schematic](/documents/schematic.png)
 
 ## BOM
 *  1 mini spst power switch
