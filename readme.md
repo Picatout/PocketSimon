@@ -74,7 +74,7 @@ threshold voltage is higher than 3 volts. This would not works with a 5 volts po
 ladder determine the charging time constant of **C3** and Rsw.  Hence the button can be identified by the time it take to voltage at **C3** 
 to charge from 0 volt to logic level **1**. The reading sequence consist of discharging **C3** through **Q2** then counting the 
 time it take for **GP3** to go from a **0** logic level to a **1** logic level. There maybe some variability from MCU to MCU and 
-also due to **C3** capacitor tolerance variability. So the constant GRN_CNT defined is the software may have to be adjusted by testing.
+also due to **C3** capacitor tolerance variability. So the constant GRN_CNT defined in the software may have to be adjusted by testing.
 See source code for more information. 
 
  The assembly is on single side perforated board with copper rings. I didn't design any layout before hand as the assembly is quite
@@ -91,11 +91,11 @@ See source code for more information.
  At power up the MCU initialize the hardware then execute a power on selft test (**POST**). The POST consist in lighting LEDs in 
  sequence while sounding their correspondign tone. The POST execute in loop until the user press a button to start game.
  
- The game start with single note. Then at each repeat success a sequence length is increment by a new random
+ The game start with single note. Then at each repeat success the sequence length is increment by a new random
 note. At length 6,12,18,24,32 a tune is played to mark your achievement. The maximum sequence length is 32 limited by RAM available. 
 But if you got that far you are a real champion and you can listen to the complete Rocky 1 movie musical theme.
  
- At then of of game the length of last sequence succeeded is displayed in the following way.
+ At the end of game the length of last sequence succeeded is displayed in the following way.
  Each LED is assigned a value and blink for multiple of this value. Adding the blinks give the total count.
 
  LED    | value
@@ -110,16 +110,17 @@ But if you got that far you are a real champion and you can listen to the comple
   where Nx is number of blinks of the colour.
  
 ## software
- This source code is in totality in file  **PocketSimon.asm** and is well documented (I think). It use 100% of RAM and 88% of
- program space which is 768 bytes. At first I wrote a working version that used 100% of program memory. Then when that first 
- version was working properly I started **size optimization**. My notes describing the step I followed to reduce code size are
- in file [notes.txt](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/notes.txt). This process was concluded by a 12% size reduction, the final version using 450 instructions.
- Some tricks used in this process are what I would call **dirty tricks**. Like using **TMR0** special function register as a temporary
- storage because there was no more RAM available. The other **dirty trick** was to rely on the fact that special fonction register
-**FSR** as only 5 bits implemented. In **store_note** and **load_note** subroutines FSR register is setup to point in tune_array. 
-For that the array index must be divided by 4 which is done by 2 **rrf** (rotate right file) instructions. Normaly the **clr** instruction should be
-used before each **rrf** to insure that carry roll in bit 7 as 0. But in this specific situtation we don't have to care about the value
-of bits 7,6 W register after division because FSR has only 5 bits when the instruction **addwf FSR,F** the value of bits 7,6 of 
+ This source code is in totality in file  [pocketSimon.asm](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/PocketSimon.asm) and is well documented (I think). 
+ It use 100% of RAM and 88% of program space which is 768 bytes. At first I wrote a working version that used 100% of program memory. 
+ Then when that first version was working properly I started **size optimization**. My notes describing the step I followed to reduce
+ code size are in file [notes.txt](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/notes.txt). This process was 
+ concluded by a 12% size reduction, the final version using 450 instructions. Some tricks used in this process are what I would call 
+ **dirty tricks**. Like using **TMR0** special function register as a temporary variable storage because there was no more RAM 
+ available. The other **dirty trick** was to rely on the fact that special fonction register **FSR** as only 5 bits implemented. 
+ In **store_note** and **load_note** subroutines FSR register is setup to point in tune_array. For that the array index must be 
+ divided by 4 which is done by 2 **rrf** (rotate right file) instructions. Normaly the **clr** instruction should be used before each
+ **rrf** to insure that carry roll in bit 7 as 0. But in this specific situtation we don't have to care about the value 
+of bits 7,6 in W register after division because FSR has only 5 bits when the instruction **addwf FSR,F** the value of bits 7,6 of 
 W registers won't affect the result.
  
 
