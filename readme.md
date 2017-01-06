@@ -111,7 +111,7 @@ But if you got that far you are a real champion and you can listen to the comple
  
 ## software
  This source code is in totality in file  [pocketSimon.asm](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/PocketSimon.asm) and is well documented (I think). 
- It use 100% of RAM and 88% of program space which is 768 bytes. At first I wrote a working version that used 100% of program memory. 
+ It use 100% of RAM and 88% of the 768 bytes program space. At first I wrote a working version that used 100% of program memory. 
  Then when that first version was working properly I started **size optimization**. My notes describing the step I followed to reduce
  code size are in file [notes.txt](https://github.com/Picatout/PocketSimon/blob/master/PocketSimon.X/notes.txt). This process was 
  concluded by a 12% size reduction, the final version using 450 instructions. Some tricks used in this process are what I would call 
