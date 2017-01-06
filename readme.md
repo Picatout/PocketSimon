@@ -121,7 +121,7 @@ But if you got that far you are a real champion and you can listen to the comple
  divided by 4 which is done by 2 **rrf** (rotate right file) instructions. Normaly the **clrc** instruction should be used before each
  **rrf** to insure that carry roll in bit 7 as 0. But in this specific situtation we don't have to care about the value 
 of bits 7,6 in W register after division because FSR has only 5 bits. When the instruction **addwf FSR,F** add de value of W to FSR 
-the value of bits 7,6 of W registers won't affect the result.
+the value of bits 7,6 of W registers doesn't affect the result.
  
 
 ## licence
